@@ -1,47 +1,62 @@
-# ddrop
-
 # 📍 My Dead Drops
 
-**My Dead Drops** je lehká, anonymní a na bezpečnost zaměřená webová aplikace (PWA) určená pro sdílení fyzických úschov (dead drops) mezi dvěma stranami: **Vendor** (vytváří úschovu) a **Zákazník** (objevuje úschovu pomocí 6místného PIN kódu).
+**My Dead Drops** je lehká, anonymní a na bezpečnost zaměřená PWA aplikace určená pro bezpečnou správy a anonymní sdílení fyzických úschov (dead drops).
 
-Aplikace funguje **bez jakékoliv registrace**, bez sběru osobních údajů a s důrazem na ochranu soukromí (odstraňování EXIF dat z fotografií přímo na zařízení).
-
----
-
-## 🚀 Hlavní vlastnosti a aktuální funkce
-
-### 🏢 Vendor Flow (Vytvoření úschovy)
-- **Interaktivní mapa & GPS:** Automatické zaměření aktuální polohy přes GPS nebo ruční posun špendlíku po mapě (OpenStreetMap + Leaflet).
-- **Textový popis:** Možnost přidat podrobný návod k nalezení úschovy (limit 500 znaků).
-- **Fotodokumentace:** Nahrání až 3 fotografií úschovy (podpora mobilního fotoaparátu).
-- **Ochrana soukromí (Client-Side EXIF Stripping):** Veškeré fotky jsou před uložením prohnány přes Canvas API v prohlížeči, které fyzicky odstraní veškerá EXIF/GPS metadata z fotoaparátu.
-- **Generátor PIN kódu:** Vytvoření kryptograficky bezpečného 6místného PINu (kombinace čísel a velkých písmen s vyloučením vizuálně zaměnitelných znaků jako `0`, `O`, `1`, `I`).
-- **Burn-After-Read (Zničit po přečtení):** Volitelná možnost automatického a trvalého smazání dat o úschově ihned po jejím prvním otevření zákazníkem.
-
-### 👤 Zákazník Flow (Vyzvednutí)
-- **Jednoduché rozhraní:** Vstupní obrazovka pro rychlé zadání 6místného PINu.
-- **Přesná lokalizace:** Zobrazení úschovy na interaktivní mapě s fotkami a textovým popisem.
-- **Přímá navigace:** Tlačítko pro okamžité přesměrování do externí mapové aplikace (Google Maps) s nastaveným cílem navigace.
-
-### 🛠 Technické vlastnosti
-- **Klientská architektura (Client-First):** Běží kompletně v prohlížeči, využívá `localStorage` a Nevyžaduje backend ani databázový server.
-- **Moderní Dark Mode UI:** Responzivní minimalistické rozhraní postavené na Tailwind CSS a ikonách Lucide.
-- **Připraveno pro mobilní zařízení:** Optimalizováno pro dotykové displeje s možností uložení na plochu jako PWA.
+Aplikace funguje **bez jakékoliv registrace** a využívá architekturu **Client-Side E2EE** (zašifrování dat přímo v prohlížeči před uložením) a **PWA / Standalone Local Engine** s možností cloudové synchronizace.
 
 ---
 
-## 🛠 Použité technologie
+## 🏗️ Architektura a oddělení rolí
 
-* **Frontend Framework:** Vanilla HTML5 / JavaScript (ES6+)
-* **Styling:** Tailwind CSS (via CDN)
-* **Mapové podklady:** Leaflet.js + OpenStreetMap
-* **Ikony:** Lucide Icons
-* **Hosting:** GitHub Pages (statický hosting)
+Aplikace je z bezpečnostních důvodů striktně rozdělená do samostatných modulů, aby běžný zákazník neměl přístup k administračním ani vendorským rozhraním:
+
+1. **`index.html` (Zákaznický portál & AR Navigace):**
+   * Vstup pro zadání 6místného PINu a dešifrování úschovy.
+   * Zobrazení detailu lokace na interaktivní mapě s fotogalerií.
+   * Živý **🧭 AR Kompas** pro navádění vzdušnou čarou.
+   * Odkaz pro podání žádosti o nový drop.
+
+2. **`vendor.html` (Vendorský portál & Administrace):**
+   * **Vytvoření úschovy:** Mapa s pohyblivým špendlíkem (`draggable`), GPS zaměřením polohy a automatickým čištěním EXIF dat z fotografií.
+   * **Správa a párování požadavků:** Přehled příchozích poptávek od zákazníků s možností **přímého spárování požadavku s nově vytvářeným dropem**.
+   * **Administrace:** Přehled všech aktivních dropů a správa lokálního/cloudového úložiště.
+
+3. **`request.html` (Portal pro podání žádosti):**
+   * Veřejný formulář pro objednávku nového dropu (specifikace částky v Kč, volitelný kupon PaysafeCard a poznámka k lokalitě).
 
 ---
 
-## ⚙️ Jak spustit lokálně
+## 🚀 Přehled aktuálních funkcí (v1.6.0)
 
-1. Klonujte tento repozitář:
-   ```bash
-   git clone [https://github.com/VASE-JMENO/my-dead-drops.git](https://github.com/VASE-JMENO/my-dead-drops.git)
+### 🔐 Bezpečnost & Soukromí
+- **End-to-End Šifrování (E2EE):** Popis i fotografie jsou šifrovány pomocí standardu **AES-GCM (256-bit)** s derivací klíče přes **PBKDF2** (30 000 iterací) přímo v zařízení.
+- **Client-Side EXIF Stripping:** Veškerá EXIF/GPS metadata z fotografií jsou před zašifrováním fyzicky odstraněna pomocí HTML5 Canvas.
+- **Burn-After-Read (Auto-destrukce):** Volitelné trvalé smazání záznamu ihned po prvním úspěšném dešifrování zákazníkem.
+
+### 🧭 Navigace & Lokace
+- **Interaktivní Leaflet Mapa:** Podpora ručního přetažení špendlíku po mapě i kliknutí na vybrané místo.
+- **GPS Zaměření:** Tlačítko pro bleskové zaměření přesné polohy zařízení.
+- **🧭 AR Kompas:** Živá směrová navigace využívající gyroskop (`deviceorientation`) a výpočet ortodromického azimutu z GPS souřadnic. Zobrazuje vzdálenost v metrech a otáčí šipku k cíli v reálném čase.
+
+### 🔄 Párování požadavků (Request-to-Drop Pairing)
+- Zákazník může přes formulář podat žádost s volitelným kuponem PaysafeCard.
+- Vendor v portálu `vendor.html` klikne na **"Vytvořit Drop pro požadavek"**, čímž se aktivuje párovací režim.
+- Po vygenerování PINu se požadavek automaticky označí jako **Vyřízeno** a trvale se spáruje se vzniklým dead dropem.
+
+### 📱 PWA & Oznámení
+- **In-App Toast Notifikace:** Plynulá vizuální oznámení o všech stavových akcích (zašifrování, chyba PINu, přesun špendlíku, zničení úschovy).
+- **Service Worker (`sw.js`):** Podpora pro offline běh a instalaci na plochu iOS/Android zařízení (`manifest.json`).
+
+---
+
+## 📂 Struktura souborů v repozitáři
+
+```text
+my-dead-drops/
+├── index.html            # Zákaznické rozhraní (Dešifrování, Mapa, AR Kompas)
+├── vendor.html           # Vendorský portál (Tvorba dropů, Párování, Admin)
+├── request.html          # Veřejný formulář pro žádost o nový drop
+├── manifest.json         # PWA Web Manifest
+├── sw.js                 # Service Worker pro offline běh a notifikace
+├── CHANGELOG.md          # Detailní historie verzí
+└── README.md             # Dokumentace projektu
