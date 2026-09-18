@@ -36,7 +36,7 @@
       <span class="font-extrabold text-lg text-slate-900 dark:text-white">Vendor Portal</span>
     </a>
 
-    <button onclick="document.documentElement.classList.toggle('dark')" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60">
+    <button onclick="toggleTheme()" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60">
       <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
       <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
     </button>
@@ -57,6 +57,18 @@
 
   <script>
     lucide.createIcons();
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem('mdd_theme') || 'dark';
+      if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    }
+
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('mdd_theme', isDark ? 'dark' : 'light');
+    }
 
     function renderRequests() {
       const container = document.getElementById('requests-container');
@@ -124,6 +136,7 @@
       }
     }
 
+    initTheme();
     renderRequests();
   </script>
 </body>
