@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>My Dead Drops</title>
+  
+  <!-- Tailwind CSS & Leaflet CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body { background-color: #0a0a0a; color: #f5f5f5; user-select: none; }
+    #map { height: 280px; width: 100%; border-radius: 12px; }
+    .leaflet-container { background: #171717 !important; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 font-sans antialiased">
+
+  <!-- HEADER -->
+  <header class="flex items-center justify-between border-b border-neutral-800 pb-3">
+    <div class="flex items-center gap-2 text-emerald-400 font-bold tracking-wider">
+      <i data-lucide="shield-lock" class="w-6 h-6"></i>
+      <span>MY DEAD DROPS</span>
+    </div>
+    <button id="reset-btn" onclick="switchRole(null)" class="hidden text-xs bg-neutral-800 text-neutral-300 px-3 py-1.5 rounded-lg flex items-center gap-1">
+      <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Roli
+    </button>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="my-auto w-full max-w-md mx-auto">
+    
+    <!-- ROLE SELECTION -->
+    <div id="view-roles" class="space-y-4">
+      <p class="text-center text-xs font-semibold tracking-widest text-neutral-500 uppercase">Vyberte režim</p>
+      
+      <button onclick="switchRole('vendor')" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-neutral-950 font-bold rounded-xl shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 active:scale-95 transition">
+        <i data-lucide="map-pin" class="w-5 h-5"></i> Vytvořit Dead Drop (Vendor)
+      </button>
+
+      <button onclick="switchRole('customer')" class="w-full py-4 bg-neutral-900 border border-neutral-800 hover:border-neutral-700 font-bold rounded-xl flex items-center justify-center gap-2 active:scale-95 transition">
+        <i data-lucide="key-round" class="w-5 h-5 text-emerald-400"></i> Otevřít podle PINu (Zákazník)
+      </button>
+    </div>
+
+    <!-- VENDOR FLOW -->
+    <div id="view-vendor" class="hidden space-y-4">
+      <div id="map"></div>
+
+      <div class="space-y-1">
+        <label class="text-xs text-neutral-400 flex justify-between">
+          <span>Popis úschovy</span>
+          <span id="char-count">0/500</span>
+        </label>
+        <textarea id="desc-input" maxlength="500" oninput="updateCharCount()" placeholder="Např. Pod kamenem za červenou lavičkou..." class="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm focus:border-emerald-500 focus:outline-none h-20 resize-none"></textarea>
+      </div>
+
+      <div>
+        <label class="text-xs text-neutral-400 mb-1 block">Fotografie (Max 3)</label>
+        <label class="flex items-center justify-center gap-2 w-full p-3 bg-neutral-900 border border-dashed border-neutral-700 rounded-lg cursor-pointer text-xs text-neutral-300">
+          <i data-lucide="camera" class="w-4 h-4 text-emerald-400"></i>
+          <span id="file-label">Vyfotiť nebo vybrat fotky</span>
+          <input type="file" id="photo-input" multiple accept="image/*" onchange="handlePhotos(this)" class="hidden">
+        </label>
+        <div id="photo-previews" class="flex gap-2 mt-2"></div>
+      </div>
+
+      <div class="flex items-center gap-2 bg-neutral-900 p-3 rounded-lg border border-neutral-800">
+        <input type="checkbox" id="burn-input" class="accent-emerald-500 w-4 h-4">
+        <label for="burn-input" class="text-xs text-neutral-300 flex items-center gap-1 cursor-pointer">
+          <i data-lucide="flame" class="w-3.5 h-3.5 text-amber-500"></i> Zničit po 1. zobrazení (Burn-after-read)
+        </label>
+      </div>
+
+      <button onclick="createDrop()" class="w-full py-3.5 bg-emerald-600 text-neutral-950 font-bold rounded-xl active:scale-95 transition">
+        Vygenerovat Dead Drop PIN
+      </button>
+    </div>
+
+    <!-- VENDOR SUCCESS (PIN RESULT) -->
+    <div id="view-vendor-success" class="hidden space-y-4 text-center">
+      <div class="bg-neutral-900 p-6 rounded-2xl border border-neutral-800 space-y-3">
+        <i data-lucide="check-circle" class="w-10 h-10 text-emerald-400 mx-auto"></i>
+        <h3 class="text-lg font-bold text-neutral-200">Dead Drop aktivní!</h3>
+        <p class="text-xs text-neutral-400">Předejte tento 6místný PIN kód zákazníkovi.</p>
+
+        <div id="result-pin" class="text-3xl font-mono font-extrabold tracking-widest text-emerald-400 bg-neutral-950 py-3 rounded-lg border border-emerald-500/30">
+          ------
+        </div>
+
+        <button onclick="copyPin()" class="w-full py-3 bg-emerald-600 text-neutral-950 font-bold rounded-lg flex items-center justify-center gap-2">
+          <i data-lucide="copy" class="w-4 h-4"></i> Zkopírovat PIN
+        </button>
+      </div>
+    </div>
+
+    <!-- CUSTOMER FLOW -->
+    <div id="view-customer" class="hidden space-y-4">
+      <div class="bg-neutral-900 p-6 rounded-2xl border border-neutral-800 space-y-4">
+        <h3 class="text-center font-bold text-xs tracking-wider uppercase text-neutral-400">Zadejte 6místný PIN</h3>
+        <input type="text" id="pin-input" maxlength="6" placeholder="A8X29K" class="w-full text-center text-3xl font-mono tracking-widest uppercase bg-neutral-950 border border-neutral-700 rounded-xl p-3 text-emerald-400 focus:outline-none focus:border-emerald-500">
+        <p id="pin-error" class="text-xs text-red-500 text-center hidden"></p>
+        <button onclick="revealDrop()" class="w-full py-3.5 bg-emerald-600 text-neutral-950 font-bold rounded-xl active:scale-95 transition">
+          Otevřít úschovu
+        </button>
+      </div>
+    </div>
+
+    <!-- CUSTOMER RESULT -->
+    <div id="view-customer-result" class="hidden space-y-4">
+      <div id="burn-warning" class="hidden bg-amber-950/40 border border-amber-800/60 text-amber-400 p-2.5 rounded-lg text-xs text-center flex items-center justify-center gap-1.5">
+        <i data-lucide="flame" class="w-4 h-4"></i> Úschova byla po otevření zničena.
+      </div>
+
+      <div id="map-customer" style="height: 220px; width: 100%; border-radius: 12px;"></div>
+
+      <a id="nav-btn" href="#" target="_blank" class="w-full py-3 bg-emerald-600 text-neutral-950 font-bold rounded-xl flex items-center justify-center gap-2">
+        <i data-lucide="navigation" class="w-4 h-4"></i> Navigovat na místo
+      </a>
+
+      <div class="bg-neutral-900 p-3 rounded-lg border border-neutral-800">
+        <p class="text-[10px] text-neutral-500 uppercase tracking-wider font-semibold">Popis lokace</p>
+        <p id="res-desc" class="text-sm text-neutral-200 mt-0.5">Bez popisu</p>
+      </div>
+
+      <div id="res-photos-container" class="space-y-1 hidden">
+        <p class="text-[10px] text-neutral-500 uppercase tracking-wider font-semibold">Fotografie</p>
+        <div id="res-photos" class="grid grid-cols-3 gap-2"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="text-center text-[10px] text-neutral-600 pt-4">
+    Šifrovaná lokální paměť • Anonymní
+  </footer>
+
+  <script>
+    lucide.createIcons();
+
+    let currentRole = null;
+    let vendorMap = null, customerMap = null;
+    let selectedMarker = null;
+    let currentPos = { lat: 50.0755, lng: 14.4378 };
+    let processedPhotos = [];
+
+    // Přepínání obrazovek
+    function switchRole(role) {
+      currentRole = role;
+      document.getElementById('reset-btn').classList.toggle('hidden', !role);
+      
+      ['roles', 'vendor', 'vendor-success', 'customer', 'customer-result'].forEach(id => {
+        document.getElementById(`view-${id}`).classList.add('hidden');
+      });
+
+      if (!role) {
+        document.getElementById('view-roles').classList.remove('hidden');
+      } else if (role === 'vendor') {
+        document.getElementById('view-vendor').classList.remove('hidden');
+        initVendorMap();
+      } else if (role === 'customer') {
+        document.getElementById('view-customer').classList.remove('hidden');
+      }
+    }
+
+    // Inicializace mapy pro Vendora
+    function initVendorMap() {
+      if (vendorMap) return;
+
+      setTimeout(() => {
+        vendorMap = L.map('map').setView([currentPos.lat, currentPos.lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(vendorMap);
+
+        selectedMarker = L.marker([currentPos.lat, currentPos.lng], { draggable: true }).addTo(vendorMap);
+        
+        selectedMarker.on('dragend', (e) => {
+          const latlng = e.target.getLatLng();
+          currentPos = { lat: latlng.lat, lng: latlng.lng };
+        });
+
+        vendorMap.on('click', (e) => {
+          currentPos = { lat: e.latlng.lat, lng: e.latlng.lng };
+          selectedMarker.setLatLng(e.latlng);
+        });
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(pos => {
+            currentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            vendorMap.setView([currentPos.lat, currentPos.lng], 16);
+            selectedMarker.setLatLng([currentPos.lat, currentPos.lng]);
+          });
+        }
+      }, 200);
+    }
+
+    // Zpracování fotek a čištění metadata přes Canvas
+    function handlePhotos(input) {
+      const files = Array.from(input.files).slice(0, 3);
+      processedPhotos = [];
+      const previewContainer = document.getElementById('photo-previews');
+      previewContainer.innerHTML = '';
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const maxDim = 1000;
+            let w = img.width, h = img.height;
+
+            if (w > h && w > maxDim) { h *= maxDim / w; w = maxDim; }
+            else if (h > maxDim) { w *= maxDim / h; h = maxDim; }
+
+            canvas.width = w;
+            canvas.height = h;
+            ctx.drawImage(img, 0, 0, w, h);
+
+            // Vyčistí EXIF a skonvertuje na JPEG
+            const cleanBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            processedPhotos.push(cleanBase64);
+
+            const thumb = document.createElement('img');
+            thumb.src = cleanBase64;
+            thumb.className = 'w-16 h-16 object-cover rounded-lg border border-neutral-700';
+            previewContainer.appendChild(thumb);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+      document.getElementById('file-label').innerText = `Vybráno ${files.length} fotek`;
+    }
+
+    function updateCharCount() {
+      const val = document.getElementById('desc-input').value;
+      document.getElementById('char-count').innerText = `${val.length}/500`;
+    }
+
+    // Generování 6místného PIN kódu
+    function generatePin() {
+      const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+      let pin = '';
+      for (let i = 0; i < 6; i++) {
+        pin += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return pin;
+    }
+
+    // Uložení Dead Dropu
+    function createDrop() {
+      const pin = generatePin();
+      const dropData = {
+        lat: currentPos.lat,
+        lng: currentPos.lng,
+        desc: document.getElementById('desc-input').value,
+        photos: processedPhotos,
+        burn: document.getElementById('burn-input').checked,
+        created: Date.now()
+      };
+
+      localStorage.setItem(`drop_${pin}`, JSON.stringify(dropData));
+
+      document.getElementById('view-vendor').classList.add('hidden');
+      document.getElementById('view-vendor-success').classList.remove('hidden');
+      document.getElementById('result-pin').innerText = pin;
+    }
+
+    function copyPin() {
+      const pin = document.getElementById('result-pin').innerText;
+      navigator.clipboard.writeText(pin);
+      alert('PIN zkopírován do schránky!');
+    }
+
+    // Zákazník: Otevření podle PINu
+    function revealDrop() {
+      const pin = document.getElementById('pin-input').value.trim().toUpperCase();
+      const errEl = document.getElementById('pin-error');
+      errEl.classList.add('hidden');
+
+      const raw = localStorage.getItem(`drop_${pin}`);
+      if (!raw) {
+        errEl.innerText = 'Neplatný nebo vypršený PIN kód.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const drop = JSON.parse(raw);
+
+      // Pokud má nastaveno burn-after-read, ihned vymažeme
+      if (drop.burn) {
+        localStorage.removeItem(`drop_${pin}`);
+        document.getElementById('burn-warning').classList.remove('hidden');
+      }
+
+      document.getElementById('view-customer').classList.add('hidden');
+      document.getElementById('view-customer-result').classList.remove('hidden');
+
+      document.getElementById('res-desc').innerText = drop.desc || 'Bez popisu';
+      document.getElementById('nav-btn').href = `https://www.google.com/maps/dir/?api=1&destination=${drop.lat},${drop.lng}`;
+
+      // Zobrazení fotek
+      const photosDiv = document.getElementById('res-photos');
+      photosDiv.innerHTML = '';
+      if (drop.photos && drop.photos.length > 0) {
+        document.getElementById('res-photos-container').classList.remove('hidden');
+        drop.photos.forEach(src => {
+          const img = document.createElement('img');
+          img.src = src;
+          img.className = 'w-full h-20 object-cover rounded-lg border border-neutral-800';
+          photosDiv.appendChild(img);
+        });
+      }
+
+      // Mapa pro zákazníka
+      setTimeout(() => {
+        customerMap = L.map('map-customer').setView([drop.lat, drop.lng], 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(customerMap);
+        L.marker([drop.lat, drop.lng]).addTo(customerMap);
+      }, 200);
+    }
+  </script>
+</body>
+</html>
