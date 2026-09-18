@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Požádat o nový drop — My Dead Drops</title>
 
-  <!-- Google Fonts & Tailwind CSS -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -27,14 +26,9 @@
   </script>
 
   <script src="https://unpkg.com/lucide@latest"></script>
-
-  <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s, color 0.3s; }
-  </style>
 </head>
 <body class="bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased">
 
-  <!-- HEADER -->
   <header class="px-5 py-4 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md bg-white/70 dark:bg-bg-dark/70 border-b border-slate-200/60 dark:border-slate-800/60">
     <a href="index.html" class="flex items-center gap-2">
       <div class="w-8 h-8 rounded-full bg-brand/10 dark:bg-brand/20 flex items-center justify-center text-brand dark:text-brand-light">
@@ -44,18 +38,16 @@
     </a>
 
     <div class="flex items-center gap-2">
-      <!-- Přepínač témat -->
-      <button onclick="document.documentElement.classList.toggle('dark')" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300 transition">
+      <button onclick="toggleTheme()" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60">
         <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
         <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
       </button>
-      <a href="index.html" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300">
+      <a href="index.html" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-500">
         <i data-lucide="x" class="w-5 h-5"></i>
       </a>
     </div>
   </header>
 
-  <!-- FORM CONTAINER -->
   <main class="flex-1 my-auto px-4 py-8 max-w-md mx-auto w-full space-y-6">
     <div class="space-y-1.5">
       <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Požádat o nový drop</h1>
@@ -93,16 +85,26 @@
     </div>
   </main>
 
-  <!-- FOOTER -->
-  <footer class="py-6 text-center space-y-1 text-slate-400 dark:text-slate-600 border-t border-slate-200/60 dark:border-slate-800/60">
-    <div class="flex items-center justify-center gap-1.5 text-brand font-bold text-sm">
-      <i data-lucide="map-pin" class="w-4 h-4 fill-current"></i> My Dead Drops
-    </div>
-    <p class="text-[10px] uppercase tracking-widest font-semibold">SKRYJ. SDÍLEJ. OBJEVUJ.</p>
-  </footer>
-
   <script>
     lucide.createIcons();
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem('mdd_theme') || 'dark';
+      if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    }
+
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('mdd_theme', isDark ? 'dark' : 'light');
+    }
+
+    function logEvent(action, details = '') {
+      const logs = JSON.parse(localStorage.getItem('mdd_logs') || '[]');
+      logs.unshift({ time: new Date().toISOString(), action, details });
+      localStorage.setItem('mdd_logs', JSON.stringify(logs.slice(0, 100)));
+    }
 
     function submitRequest(e) {
       e.preventDefault();
@@ -120,14 +122,18 @@
         amount: amount,
         pscCode: pscCode,
         note: combinedNote,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        status: 'pending'
       });
       
       localStorage.setItem('my_requests', JSON.stringify(requests));
+      logEvent('REQUEST_SUBMITTED', `ID: ${reqId}, Amount: ${amount} CZK`);
 
-      alert(`Žádost ${reqId} byla úspěšně odoslána!`);
+      alert(`Žádost ${reqId} byla úspěšně odeslána!`);
       window.location.href = 'index.html';
     }
+
+    initTheme();
   </script>
 </body>
 </html>
