@@ -53,23 +53,22 @@
         <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
         <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
       </button>
-      <a href="vendor.html" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300" title="Vendor Portál">
+      <button onclick="openVendorPortal()" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300" title="Vendor Portál">
         <i data-lucide="shield-check" class="w-5 h-5 text-brand"></i>
-      </a>
+      </button>
     </div>
   </header>
 
   <!-- MAIN CONTAINER -->
   <main class="flex-1 flex flex-col justify-center px-4 py-6 max-w-md mx-auto w-full">
 
-    <!-- OBRAZOVKA 1: zadání PINu -->
+    <!-- OBRAZOVKA 1: VSTUPNÍ PIN -->
     <div id="screen-pin" class="space-y-8 text-center my-auto">
       <div class="space-y-2">
         <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Objev skrytá místa.</h1>
         <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Zadej 6místný PIN a odemkni úschovu.</p>
       </div>
 
-      <!-- 6 x PIN BOX -->
       <div class="flex justify-center gap-2" id="pin-container">
         <input type="text" maxlength="1" class="pin-box w-12 h-14 text-center text-2xl font-bold bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl focus:outline-none focus:border-brand shadow-sm uppercase dark:text-white">
         <input type="text" maxlength="1" class="pin-box w-12 h-14 text-center text-2xl font-bold bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl focus:outline-none focus:border-brand shadow-sm uppercase dark:text-white">
@@ -106,40 +105,47 @@
         🔥 Úschova byla po otevření trvale smazána.
       </div>
 
-      <!-- Galerie Fotografií -->
       <div id="res-photos-container" class="hidden space-y-2">
         <div id="res-photos" class="grid grid-cols-3 gap-2"></div>
       </div>
 
-      <!-- Popis -->
       <div class="bg-white dark:bg-bg-cardDark p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 space-y-1.5 shadow-sm">
         <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Popis</h3>
-        <p id="res-desc" class="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
-          Bez popisu.
-        </p>
+        <p id="res-desc" class="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">Bez popisu.</p>
       </div>
 
-      <!-- Náhled Mapy -->
       <div class="rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800 h-44 relative shadow-sm">
         <div id="mini-map" class="w-full h-full"></div>
       </div>
 
-      <!-- Tlačítko pro spuštění AR Kompasu -->
       <button onclick="showScreen('screen-compass')" class="w-full py-4 bg-brand dark:bg-brand-light text-white dark:text-slate-950 font-extrabold rounded-2xl shadow-lg shadow-brand/20 flex items-center justify-center gap-2 active:scale-[0.98] transition">
         <i data-lucide="navigation" class="w-5 h-5"></i> Spustit AR kompas
       </button>
 
+      <!-- HLÁŠENÍ STAVU DROPŮ -->
+      <div class="bg-white dark:bg-bg-cardDark p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 space-y-2">
+        <p class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Nahlásit stav úschovy</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="reportDropStatus('picked')" class="py-2.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 font-bold rounded-xl text-xs flex items-center justify-center gap-1">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i> Vyzvednuto
+          </button>
+          <button onclick="reportDropStatus('missing')" class="py-2.5 bg-red-500/10 border border-red-500/30 text-red-500 font-bold rounded-xl text-xs flex items-center justify-center gap-1">
+            <i data-lucide="alert-triangle" class="w-4 h-4"></i> Nenalezeno
+          </button>
+        </div>
+      </div>
+
       <div class="grid grid-cols-2 gap-3">
-        <a id="ext-map-link" href="#" target="_blank" class="py-3.5 bg-white dark:bg-bg-cardDark border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-bold rounded-2xl flex items-center justify-center gap-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+        <a id="ext-map-link" href="#" target="_blank" class="py-3.5 bg-white dark:bg-bg-cardDark border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-bold rounded-2xl flex items-center justify-center gap-2 text-xs">
           <i data-lucide="map" class="w-4 h-4 text-brand"></i> Otevřít v mapách
         </a>
-        <button onclick="shareLocation()" class="py-3.5 bg-white dark:bg-bg-cardDark border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-bold rounded-2xl flex items-center justify-center gap-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+        <button onclick="shareLocation()" class="py-3.5 bg-white dark:bg-bg-cardDark border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-bold rounded-2xl flex items-center justify-center gap-2 text-xs">
           <i data-lucide="share-2" class="w-4 h-4 text-brand"></i> Sdílet polohu
         </button>
       </div>
     </div>
 
-    <!-- OBRAZOVKA 3: FULLSCREEN AR KOMPAS -->
+    <!-- OBRAZOVKA 3: AR KOMPAS -->
     <div id="screen-compass" class="hidden fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6 text-white bg-cover bg-center">
       <div class="flex items-center justify-between">
         <div class="opacity-0">.</div>
@@ -148,12 +154,11 @@
           <p id="compass-dist-top" class="text-3xl font-extrabold tracking-tight mt-0.5">--- m</p>
           <p class="text-[11px] text-slate-400">Přímá vzdálenost</p>
         </div>
-        <button onclick="showScreen('screen-detail')" class="p-3 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition">
+        <button onclick="showScreen('screen-detail')" class="p-3 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20">
           <i data-lucide="x" class="w-6 h-6"></i>
         </button>
       </div>
 
-      <!-- AR Růže Kompasu -->
       <div class="relative w-64 h-64 mx-auto my-auto flex items-center justify-center">
         <div class="absolute inset-0 rounded-full border-2 border-white/20 flex items-center justify-center">
           <span class="absolute top-2 font-bold text-xs text-slate-400">N</span>
@@ -168,7 +173,7 @@
       </div>
 
       <div class="space-y-3">
-        <div id="compass-status-text" class="bg-black/40 backdrop-blur-md border border-white/10 p-3.5 rounded-2xl text-center text-xs font-medium text-slate-300">
+        <div class="bg-black/40 backdrop-blur-md border border-white/10 p-3.5 rounded-2xl text-center text-xs font-medium text-slate-300">
           Drž telefon před sebou a následuj šipku.
         </div>
         
@@ -187,17 +192,16 @@
 
   </main>
 
-  <!-- SPODNÍ NAVIGAČNÍ LIŠTA -->
   <nav class="sticky bottom-0 z-40 bg-white/80 dark:bg-bg-dark/80 backdrop-blur-md border-t border-slate-200/60 dark:border-slate-800/60 px-6 py-2.5 max-w-md mx-auto w-full flex justify-around items-center text-slate-400 dark:text-slate-500">
     <button onclick="showScreen('screen-pin')" class="flex flex-col items-center gap-1 text-brand dark:text-brand-light">
       <i data-lucide="map" class="w-5 h-5"></i>
       <span class="text-[10px] font-bold">Mapa</span>
     </button>
-    <button onclick="alert('Zadejte 6místný PIN kód od Vendora pro zobrazení úschovy.')" class="flex flex-col items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300 transition">
+    <button onclick="alert('Zadejte 6místný PIN kód od Vendora pro zobrazení úschovy.')" class="flex flex-col items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300">
       <i data-lucide="help-circle" class="w-5 h-5"></i>
       <span class="text-[10px] font-bold">Jak to funguje</span>
     </button>
-    <a href="request.html" class="flex flex-col items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300 transition">
+    <a href="request.html" class="flex flex-col items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300">
       <i data-lucide="plus-circle" class="w-5 h-5"></i>
       <span class="text-[10px] font-bold">Podat žádost</span>
     </a>
@@ -207,11 +211,27 @@
     lucide.createIcons();
 
     let targetDropPos = null;
+    let currentPinHash = null;
     let miniMap = null;
     let userHeading = 0;
 
+    // SYNCHRONIZACE TÉMATU
+    function initTheme() {
+      const savedTheme = localStorage.getItem('mdd_theme') || 'dark';
+      if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    }
+
     function toggleTheme() {
       document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('mdd_theme', isDark ? 'dark' : 'light');
+    }
+
+    function logEvent(action, details = '') {
+      const logs = JSON.parse(localStorage.getItem('mdd_logs') || '[]');
+      logs.unshift({ time: new Date().toISOString(), action, details });
+      localStorage.setItem('mdd_logs', JSON.stringify(logs.slice(0, 100)));
     }
 
     function showScreen(screenId) {
@@ -224,7 +244,6 @@
       if (screenId === 'screen-compass') startCompass();
     }
 
-    // Auto-focus na PIN vstupních políčkách
     const boxes = document.querySelectorAll('.pin-box');
     boxes.forEach((box, idx) => {
       box.addEventListener('input', (e) => {
@@ -235,7 +254,6 @@
       });
     });
 
-    // KRYPTOGRAFIE E2EE
     async function hashPin(pin) {
       const msgUint8 = new TextEncoder().encode(pin.toUpperCase());
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
@@ -279,11 +297,13 @@
       }
 
       const pinH = await hashPin(pin);
+      currentPinHash = pinH;
       const raw = localStorage.getItem(`drop_${pinH}`);
 
       if (!raw) {
         errEl.innerText = 'Neplatný nebo nenalezený PIN kód.';
         errEl.classList.remove('hidden');
+        logEvent('FAILED_UNLOCK', `PIN: ${pin}`);
         return;
       }
 
@@ -293,14 +313,18 @@
       if (!decryptedData) {
         errEl.innerText = 'Chyba dešifrování.';
         errEl.classList.remove('hidden');
+        logEvent('DECRYPT_ERROR', `PIN: ${pin}`);
         return;
       }
 
       targetDropPos = { lat: dropRecord.lat, lng: dropRecord.lng };
 
+      logEvent('DROP_UNLOCKED', `PIN Hash: ${pinH.substring(0, 8)}...`);
+
       if (dropRecord.burn) {
         localStorage.removeItem(`drop_${pinH}`);
         document.getElementById('burn-warning').classList.remove('hidden');
+        logEvent('DROP_BURNED', `PIN Hash: ${pinH.substring(0, 8)}...`);
       }
 
       document.getElementById('res-desc').innerText = decryptedData.desc || 'Bez popisu.';
@@ -321,6 +345,29 @@
       showScreen('screen-detail');
     }
 
+    function reportDropStatus(status) {
+      if (!currentPinHash) return;
+      const raw = localStorage.getItem(`drop_${currentPinHash}`);
+      if (raw) {
+        const drop = JSON.parse(raw);
+        drop.status = status;
+        localStorage.setItem(`drop_${currentPinHash}`, JSON.stringify(drop));
+      }
+      logEvent('STATUS_REPORTED', `Status: ${status}, Hash: ${currentPinHash.substring(0, 8)}...`);
+      alert(status === 'picked' ? 'Děkujeme! Úschova byla označena jako vyzvednutá.' : 'Hlášení zaznamenáno. Vendor byl upozorněn.');
+    }
+
+    function openVendorPortal() {
+      const masterPin = localStorage.getItem('mdd_master_pin') || '1337';
+      const input = prompt('Zadejte Master PIN pro vstup do rozhraní Vendora:');
+      if (input === masterPin) {
+        window.location.href = 'vendor.html';
+      } else if (input !== null) {
+        alert('Nesprávný PIN!');
+        logEvent('VENDOR_AUTH_FAILED');
+      }
+    }
+
     function initMiniMap() {
       if (!targetDropPos) return;
       if (miniMap) {
@@ -334,7 +381,6 @@
       }, 100);
     }
 
-    // AR KOMPAS LOGIKA
     function startCompass() {
       if (!targetDropPos) return;
 
@@ -387,6 +433,8 @@
       navigator.clipboard.writeText(window.location.href);
       alert('Odkaz zkopírován!');
     }
+
+    initTheme();
   </script>
 </body>
 </html>
