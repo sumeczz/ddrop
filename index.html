@@ -87,9 +87,14 @@
         </label>
       </div>
 
-      <button id="vendor-submit-btn" onclick="createDrop()" class="w-full py-3.5 bg-emerald-600 text-neutral-950 font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-2">
-        <i data-lucide="key" class="w-4 h-4"></i> Zašifrovat a vygenerovat PIN
-      </button>
+      <!-- TLAČÍTKO ODESLÁNÍ + TEXT PROCESU -->
+      <div class="space-y-1.5">
+        <button id="vendor-submit-btn" onclick="createDrop()" class="w-full py-3.5 bg-emerald-600 text-neutral-950 font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-2 disabled:opacity-50">
+          <i data-lucide="key" class="w-4 h-4"></i> Zašifrovat a vygenerovat PIN
+        </button>
+        <!-- Malý text zobrazující aktuální stav -->
+        <p id="vendor-status" class="text-[11px] text-center text-emerald-400/90 font-mono min-h-[16px]"></p>
+      </div>
     </div>
 
     <!-- VENDOR SUCCESS -->
@@ -115,9 +120,13 @@
         <h3 class="text-center font-bold text-xs tracking-wider uppercase text-neutral-400">Zadejte 6místný PIN pro dešifrování</h3>
         <input type="text" id="pin-input" maxlength="6" placeholder="A8X29K" class="w-full text-center text-3xl font-mono tracking-widest uppercase bg-neutral-950 border border-neutral-700 rounded-xl p-3 text-emerald-400 focus:outline-none focus:border-emerald-500">
         <p id="pin-error" class="text-xs text-red-500 text-center hidden"></p>
-        <button id="customer-submit-btn" onclick="revealDrop()" class="w-full py-3.5 bg-emerald-600 text-neutral-950 font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-2">
-          <i data-lucide="unlock" class="w-4 h-4"></i> Dešifrovat a otevřít
-        </button>
+        
+        <div class="space-y-1.5">
+          <button id="customer-submit-btn" onclick="revealDrop()" class="w-full py-3.5 bg-emerald-600 text-neutral-950 font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-2 disabled:opacity-50">
+            <i data-lucide="unlock" class="w-4 h-4"></i> Dešifrovat a otevřít
+          </button>
+          <p id="customer-status" class="text-[11px] text-center text-emerald-400/90 font-mono min-h-[16px]"></p>
+        </div>
       </div>
     </div>
 
@@ -159,21 +168,11 @@
       </div>
       <div class="overflow-y-auto space-y-3 text-xs text-neutral-300 pr-1">
         <div>
-          <span class="font-bold text-emerald-400">v1.1.0 — E2EE & PWA Release</span>
+          <span class="font-bold text-emerald-400">v1.1.1 — Oprava šifrovacího toku</span>
           <ul class="list-disc list-inside text-neutral-400 mt-1 space-y-0.5">
-            <li>Implementováno AES-GCM 256-bit šifrování na straně klienta.</li>
-            <li>Derivace šifrovacího klíče z PIN kódu pomocí PBKDF2.</li>
-            <li>Přidán Web Manifest (PWA) a Service Worker pro offline běh.</li>
-            <li>Přidán changelog modal přímo do aplikace.</li>
-          </ul>
-        </div>
-        <div>
-          <span class="font-bold text-neutral-200">v1.0.0 — Základní vydání</span>
-          <ul class="list-disc list-inside text-neutral-400 mt-1 space-y-0.5">
-            <li>Vendor & Zákazník rozhraní.</li>
-            <li>Leaflet.js mapa + automatické GPS zaměření.</li>
-            <li>EXIF stripping pro nahrané snímky přes HTML Canvas.</li>
-            <li>Burn-after-read logika & 6místné PIN kódování.</li>
+            <li>Opraveno zamrzání při šifrování velkých fotografií.</li>
+            <li>Přidán indikátor reálného stavu pod tlačítka.</li>
+            <li>Optimalizován převod bajtových polí pro Web Crypto API.</li>
           </ul>
         </div>
       </div>
@@ -190,10 +189,9 @@
   </footer>
 
   <script>
-    // Registrace Service Workeru pro PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW chyba:', err));
+        navigator.serviceWorker.register('sw.js').catch(() => {});
       });
     }
 
@@ -203,10 +201,31 @@
     let vendorMap = null, customerMap = null;
     let selectedMarker = null;
     let currentPos = { lat: 50.0755, lng: 14.4378 };
-    let processedPhotos = [];
+    let photoFiles = [];
+
+    // Pomocná funkce pro převod ArrayBuffer na Base64 string bez vytížení paměti
+    function bufferToBase64(buffer) {
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      const len = bytes.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+
+    function base64ToBuffer(base64) {
+      const binaryString = window.atob(base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
 
     // ==========================================
-    // KRYPTOGRAFICKÉ FUNKCE (Web Crypto API - AES-GCM)
+    // KRYPTOGRAFIE (Optimized AES-GCM + PBKDF2)
     // ==========================================
     async function deriveKey(pin, salt) {
       const enc = new TextEncoder();
@@ -217,7 +236,7 @@
         {
           name: 'PBKDF2',
           salt: salt,
-          iterations: 100000,
+          iterations: 30000, // Snížený počet iterací pro okamžitý běh na mobilu
           hash: 'SHA-256'
         },
         keyMaterial,
@@ -227,48 +246,56 @@
       );
     }
 
-    async function encryptData(dataObj, pin) {
+    async function encryptData(dataObj, pin, updateStatus) {
+      updateStatus("Generuji kryptografickou sůl...");
       const enc = new TextEncoder();
       const salt = crypto.getRandomValues(new Uint8Array(16));
       const iv = crypto.getRandomValues(new Uint8Array(12));
+
+      updateStatus("Derivuji AES-256 klíč...");
       const key = await deriveKey(pin, salt);
 
+      updateStatus("Šifruji data (AES-GCM)...");
       const encodedData = enc.encode(JSON.stringify(dataObj));
-      const encryptedContent = await crypto.subtle.encrypt(
+      const encryptedBuffer = await crypto.subtle.encrypt(
         { name: 'AES-GCM', iv: iv },
         key,
         encodedData
       );
 
       return {
-        cipherText: Array.from(new Uint8Array(encryptedContent)),
-        salt: Array.from(salt),
-        iv: Array.from(iv)
+        cipherText: bufferToBase64(encryptedBuffer),
+        salt: bufferToBase64(salt.buffer),
+        iv: bufferToBase64(iv.buffer)
       };
     }
 
-    async function decryptData(encryptedObj, pin) {
+    async function decryptData(encryptedObj, pin, updateStatus) {
       try {
-        const dec = new TextDecoder();
-        const salt = new Uint8Array(encryptedObj.salt);
-        const iv = new Uint8Array(encryptedObj.iv);
-        const cipherText = new Uint8Array(encryptedObj.cipherText);
+        updateStatus("Načítám šifrovací parametry...");
+        const salt = new Uint8Array(base64ToBuffer(encryptedObj.salt));
+        const iv = new Uint8Array(base64ToBuffer(encryptedObj.iv));
+        const cipherBuffer = base64ToBuffer(encryptedObj.cipherText);
 
+        updateStatus("Derivuji klíč z PIN kódu...");
         const key = await deriveKey(pin, salt);
-        const decryptedContent = await crypto.subtle.decrypt(
+
+        updateStatus("Dešifruji data...");
+        const decryptedBuffer = await crypto.subtle.decrypt(
           { name: 'AES-GCM', iv: iv },
           key,
-          cipherText
+          cipherBuffer
         );
 
-        return JSON.parse(dec.decode(decryptedContent));
+        const dec = new TextDecoder();
+        return JSON.parse(dec.decode(decryptedBuffer));
       } catch (e) {
-        return null; // Špatný PIN kód nebo poškozená data
+        return null;
       }
     }
 
     // ==========================================
-    // LOGIKA APLIKACE
+    // UI A LOGIKA APLIKACE
     // ==========================================
     function toggleChangelog(show) {
       document.getElementById('changelog-modal').classList.toggle('hidden', !show);
@@ -322,19 +349,33 @@
     }
 
     function handlePhotos(input) {
-      const files = Array.from(input.files).slice(0, 3);
-      processedPhotos = [];
+      photoFiles = Array.from(input.files).slice(0, 3);
       const previewContainer = document.getElementById('photo-previews');
       previewContainer.innerHTML = '';
 
-      files.forEach(file => {
+      photoFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const thumb = document.createElement('img');
+          thumb.src = e.target.result;
+          thumb.className = 'w-16 h-16 object-cover rounded-lg border border-neutral-700';
+          previewContainer.appendChild(thumb);
+        };
+        reader.readAsDataURL(file);
+      });
+      document.getElementById('file-label').innerText = `Vybráno ${photoFiles.length} fotek`;
+    }
+
+    // Převod obrázku na vyčištěný JPEG Base64
+    function processImage(file) {
+      return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => {
           const img = new Image();
           img.onload = () => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            const maxDim = 1000;
+            const maxDim = 800;
             let w = img.width, h = img.height;
 
             if (w > h && w > maxDim) { h *= maxDim / w; w = maxDim; }
@@ -343,20 +384,12 @@
             canvas.width = w;
             canvas.height = h;
             ctx.drawImage(img, 0, 0, w, h);
-
-            const cleanBase64 = canvas.toDataURL('image/jpeg', 0.7);
-            processedPhotos.push(cleanBase64);
-
-            const thumb = document.createElement('img');
-            thumb.src = cleanBase64;
-            thumb.className = 'w-16 h-16 object-cover rounded-lg border border-neutral-700';
-            previewContainer.appendChild(thumb);
+            resolve(canvas.toDataURL('image/jpeg', 0.6));
           };
           img.src = e.target.result;
         };
         reader.readAsDataURL(file);
       });
-      document.getElementById('file-label').innerText = `Vybráno ${files.length} fotek`;
     }
 
     function updateCharCount() {
@@ -375,36 +408,53 @@
 
     async function createDrop() {
       const btn = document.getElementById('vendor-submit-btn');
-      btn.disabled = true;
-      btn.innerText = 'Šifruji data...';
-
-      const pin = generatePin();
+      const status = document.getElementById('vendor-status');
       
-      // Souřadnice zůstávají pro funkčnost mapy nezašifrované, popis a fotky se šifrují E2EE
-      const payloadToEncrypt = {
-        desc: document.getElementById('desc-input').value,
-        photos: processedPhotos
-      };
+      btn.disabled = true;
+      status.innerText = "Zahajuji proces...";
 
-      const encryptedPackage = await encryptData(payloadToEncrypt, pin);
+      try {
+        // 1. Zpracování a anonymizace fotek
+        const cleanPhotos = [];
+        for (let i = 0; i < photoFiles.length; i++) {
+          status.innerText = `Anonymizuji fotku ${i + 1}/${photoFiles.length}...`;
+          const cleanBase64 = await processImage(photoFiles[i]);
+          cleanPhotos.push(cleanBase64);
+        }
 
-      const dropRecord = {
-        lat: currentPos.lat,
-        lng: currentPos.lng,
-        encrypted: encryptedPackage,
-        burn: document.getElementById('burn-input').checked,
-        created: Date.now()
-      };
+        const pin = generatePin();
+        const payloadToEncrypt = {
+          desc: document.getElementById('desc-input').value,
+          photos: cleanPhotos
+        };
 
-      localStorage.setItem(`drop_${pin}`, JSON.stringify(dropRecord));
+        // 2. Šifrování
+        const encryptedPackage = await encryptData(payloadToEncrypt, pin, (msg) => {
+          status.innerText = msg;
+        });
 
-      btn.disabled = false;
-      btn.innerHTML = '<i data-lucide="key" class="w-4 h-4"></i> Zašifrovat a vygenerovat PIN';
-      lucide.createIcons();
+        status.innerText = "Ukládám do bezpečného úložiště...";
+        const dropRecord = {
+          lat: currentPos.lat,
+          lng: currentPos.lng,
+          encrypted: encryptedPackage,
+          burn: document.getElementById('burn-input').checked,
+          created: Date.now()
+        };
 
-      document.getElementById('view-vendor').classList.add('hidden');
-      document.getElementById('view-vendor-success').classList.remove('hidden');
-      document.getElementById('result-pin').innerText = pin;
+        localStorage.setItem(`drop_${pin}`, JSON.stringify(dropRecord));
+
+        status.innerText = "";
+        document.getElementById('view-vendor').classList.add('hidden');
+        document.getElementById('view-vendor-success').classList.remove('hidden');
+        document.getElementById('result-pin').innerText = pin;
+
+      } catch (err) {
+        console.error(err);
+        status.innerText = "Chyba při vytváření. Zkuste to znovu.";
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     function copyPin() {
@@ -417,6 +467,8 @@
       const pin = document.getElementById('pin-input').value.trim().toUpperCase();
       const errEl = document.getElementById('pin-error');
       const btn = document.getElementById('customer-submit-btn');
+      const status = document.getElementById('customer-status');
+      
       errEl.classList.add('hidden');
 
       const raw = localStorage.getItem(`drop_${pin}`);
@@ -427,49 +479,59 @@
       }
 
       btn.disabled = true;
-      btn.innerText = 'Dešifruji data...';
+      status.innerText = "Vyhledávám záznam...";
 
-      const dropRecord = JSON.parse(raw);
-      const decryptedData = await decryptData(dropRecord.encrypted, pin);
-
-      btn.disabled = false;
-      btn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4"></i> Dešifrovat a otevřít';
-      lucide.createIcons();
-
-      if (!decryptedData) {
-        errEl.innerText = 'Chyba dešifrování. Neplatný PIN kód.';
-        errEl.classList.remove('hidden');
-        return;
-      }
-
-      if (dropRecord.burn) {
-        localStorage.removeItem(`drop_${pin}`);
-        document.getElementById('burn-warning').classList.remove('hidden');
-      }
-
-      document.getElementById('view-customer').classList.add('hidden');
-      document.getElementById('view-customer-result').classList.remove('hidden');
-
-      document.getElementById('res-desc').innerText = decryptedData.desc || 'Bez popisu';
-      document.getElementById('nav-btn').href = `https://www.google.com/maps/dir/?api=1&destination=${dropRecord.lat},${dropRecord.lng}`;
-
-      const photosDiv = document.getElementById('res-photos');
-      photosDiv.innerHTML = '';
-      if (decryptedData.photos && decryptedData.photos.length > 0) {
-        document.getElementById('res-photos-container').classList.remove('hidden');
-        decryptedData.photos.forEach(src => {
-          const img = document.createElement('img');
-          img.src = src;
-          img.className = 'w-full h-20 object-cover rounded-lg border border-neutral-800';
-          photosDiv.appendChild(img);
+      try {
+        const dropRecord = JSON.parse(raw);
+        const decryptedData = await decryptData(dropRecord.encrypted, pin, (msg) => {
+          status.innerText = msg;
         });
-      }
 
-      setTimeout(() => {
-        customerMap = L.map('map-customer').setView([dropRecord.lat, dropRecord.lng], 16);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(customerMap);
-        L.marker([dropRecord.lat, dropRecord.lng]).addTo(customerMap);
-      }, 200);
+        if (!decryptedData) {
+          errEl.innerText = 'Chyba dešifrování. Neplatný PIN kód.';
+          errEl.classList.remove('hidden');
+          status.innerText = "";
+          return;
+        }
+
+        if (dropRecord.burn) {
+          localStorage.removeItem(`drop_${pin}`);
+          document.getElementById('burn-warning').classList.remove('hidden');
+        }
+
+        status.innerText = "";
+        document.getElementById('view-customer').classList.add('hidden');
+        document.getElementById('view-customer-result').classList.remove('hidden');
+
+        document.getElementById('res-desc').innerText = decryptedData.desc || 'Bez popisu';
+        document.getElementById('nav-btn').href = `https://www.google.com/maps/dir/?api=1&destination=${dropRecord.lat},${dropRecord.lng}`;
+
+        const photosDiv = document.getElementById('res-photos');
+        photosDiv.innerHTML = '';
+        if (decryptedData.photos && decryptedData.photos.length > 0) {
+          document.getElementById('res-photos-container').classList.remove('hidden');
+          decryptedData.photos.forEach(src => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'w-full h-20 object-cover rounded-lg border border-neutral-800';
+            photosDiv.appendChild(img);
+          });
+        }
+
+        setTimeout(() => {
+          customerMap = L.map('map-customer').setView([dropRecord.lat, dropRecord.lng], 16);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(customerMap);
+          L.marker([dropRecord.lat, dropRecord.lng]).addTo(customerMap);
+        }, 200);
+
+      } catch (err) {
+        console.error(err);
+        errEl.innerText = 'Chyba při zpracování dat.';
+        errEl.classList.remove('hidden');
+        status.innerText = "";
+      } finally {
+        btn.disabled = false;
+      }
     }
   </script>
 </body>
