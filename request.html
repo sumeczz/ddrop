@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Požádat o nový drop — My Dead Drops</title>
 
+  <!-- Google Fonts & Tailwind CSS -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -24,7 +25,12 @@
       }
     }
   </script>
+
   <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s, color 0.3s; }
+  </style>
 </head>
 <body class="bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased">
 
@@ -37,10 +43,16 @@
       <span class="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white">My Dead Drops</span>
     </a>
 
-    <button onclick="document.documentElement.classList.toggle('dark')" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300">
-      <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
-      <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
-    </button>
+    <div class="flex items-center gap-2">
+      <!-- Přepínač témat -->
+      <button onclick="document.documentElement.classList.toggle('dark')" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300 transition">
+        <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+        <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+      </button>
+      <a href="index.html" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </a>
+    </div>
   </header>
 
   <!-- FORM CONTAINER -->
@@ -53,22 +65,22 @@
     <form onsubmit="submitRequest(event)" class="space-y-4">
       <div>
         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Částka (Kč) *</label>
-        <input type="number" required placeholder="Např. 500" class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand text-slate-900 dark:text-white">
+        <input type="number" id="req-amount" required placeholder="Např. 500" class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand text-slate-900 dark:text-white shadow-sm">
       </div>
 
       <div>
         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">PaysafeCard kód (volitelně)</label>
-        <input type="text" placeholder="Např. 1234-5678-9012-3456" class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand text-slate-900 dark:text-white">
+        <input type="text" id="req-psc" placeholder="Např. 1234-5678-9012-3456" class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand text-slate-900 dark:text-white shadow-sm">
       </div>
 
       <div>
         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Preferovaná lokalita</label>
-        <input type="text" placeholder="Např. centrum, park, u mostu..." class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand text-slate-900 dark:text-white">
+        <input type="text" id="req-location" placeholder="Např. centrum, park, u mostu..." class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand text-slate-900 dark:text-white shadow-sm">
       </div>
 
       <div>
         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Poznámka</label>
-        <textarea placeholder="Doplň další informace..." class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand h-24 resize-none text-slate-900 dark:text-white"></textarea>
+        <textarea id="req-note" placeholder="Doplň další informace..." class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand h-24 resize-none text-slate-900 dark:text-white shadow-sm"></textarea>
       </div>
 
       <button type="submit" class="w-full py-4 bg-brand hover:bg-brand-dark text-white font-extrabold rounded-2xl shadow-lg shadow-brand/25 flex items-center justify-center gap-2 text-base active:scale-[0.98] transition">
@@ -81,7 +93,7 @@
     </div>
   </main>
 
-  <!-- FOOTER BRANDING -->
+  <!-- FOOTER -->
   <footer class="py-6 text-center space-y-1 text-slate-400 dark:text-slate-600 border-t border-slate-200/60 dark:border-slate-800/60">
     <div class="flex items-center justify-center gap-1.5 text-brand font-bold text-sm">
       <i data-lucide="map-pin" class="w-4 h-4 fill-current"></i> My Dead Drops
@@ -91,9 +103,29 @@
 
   <script>
     lucide.createIcons();
+
     function submitRequest(e) {
       e.preventDefault();
-      alert('Žádost byla anonymně odeslána!');
+      const amount = document.getElementById('req-amount').value;
+      const pscCode = document.getElementById('req-psc').value.trim();
+      const location = document.getElementById('req-location').value.trim();
+      const noteInput = document.getElementById('req-note').value.trim();
+
+      const combinedNote = [location ? `Lokalita: ${location}` : '', noteInput].filter(Boolean).join(' | ');
+      const reqId = 'REQ-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      const requests = JSON.parse(localStorage.getItem('my_requests') || '[]');
+      requests.push({
+        reqId: reqId,
+        amount: amount,
+        pscCode: pscCode,
+        note: combinedNote,
+        date: new Date().toISOString()
+      });
+      
+      localStorage.setItem('my_requests', JSON.stringify(requests));
+
+      alert(`Žádost ${reqId} byla úspěšně odoslána!`);
       window.location.href = 'index.html';
     }
   </script>
