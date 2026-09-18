@@ -1,245 +1,240 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="cs" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>My Dead Drops — Vendor Workspace</title>
-  
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0a0a0a">
-  
-  <!-- CDN Libraries -->
+  <title>Vendor & Admin — My Dead Drops</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+          colors: {
+            brand: { DEFAULT: '#00b87c', light: '#00e699', dark: '#008f60' },
+            bg: { light: '#f4f6f8', dark: '#0a0f14', cardLight: '#ffffff', cardDark: '#121921' }
+          }
+        }
+      }
+    }
+  </script>
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-
-  <style>
-    body { background-color: #0a0a0a; color: #f5f5f5; user-select: none; }
-    #map { height: 260px; width: 100%; border-radius: 12px; }
-    .leaflet-container { background: #171717 !important; }
-    @keyframes slideDown {
-      from { transform: translateY(-100%); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    .toast-anim { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between p-4 font-sans antialiased relative">
+<body class="bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased">
 
-  <div id="toast-container" class="fixed top-4 left-4 right-4 z-[3000] max-w-md mx-auto pointer-events-none space-y-2"></div>
-
-  <header class="flex items-center justify-between border-b border-neutral-800 pb-3">
-    <div class="flex items-center gap-2 text-emerald-400 font-bold tracking-wider">
-      <i data-lucide="shield-alert" class="w-6 h-6"></i>
-      <span>VENDOR PORTAL</span>
-    </div>
+  <header class="px-5 py-4 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md bg-white/70 dark:bg-bg-dark/70 border-b border-slate-200/60 dark:border-slate-800/60">
     <div class="flex items-center gap-2">
-      <button onclick="toggleAdminModal(true)" class="text-xs bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 px-2.5 py-1.5 rounded-lg flex items-center gap-1">
-        <i data-lucide="settings" class="w-3.5 h-3.5 text-emerald-400"></i> Admin Přehled
+      <div class="w-8 h-8 rounded-full bg-brand/10 dark:bg-brand/20 flex items-center justify-center text-brand dark:text-brand-light">
+        <i data-lucide="shield-check" class="w-5 h-5"></i>
+      </div>
+      <span class="font-extrabold text-lg text-slate-900 dark:text-white">Vendor Workspace</span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button onclick="toggleTheme()" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60">
+        <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+        <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
       </button>
-      <a href="index.html" class="text-xs bg-neutral-800 text-neutral-300 px-3 py-1.5 rounded-lg flex items-center gap-1">
-        <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Odhlásit
+      <a href="index.html" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-500">
+        <i data-lucide="log-out" class="w-5 h-5"></i>
       </a>
     </div>
   </header>
 
-  <main class="my-auto w-full max-w-md mx-auto py-4 space-y-4">
-    
-    <!-- Vendor Navigation Tabs -->
-    <div class="flex bg-neutral-900 p-1 rounded-xl border border-neutral-800">
-      <button id="tab-create-btn" onclick="switchVendorTab('create')" class="flex-1 py-2.5 text-xs font-bold rounded-lg bg-emerald-600 text-neutral-950 transition flex justify-center items-center gap-1.5">
-        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Vytvořit Drop
+  <main class="flex-1 px-4 py-6 max-w-md mx-auto w-full space-y-6">
+
+    <!-- NAV TABS -->
+    <div class="flex bg-slate-200/60 dark:bg-slate-800/60 p-1 rounded-2xl">
+      <button id="tab-create-btn" onclick="switchTab('create')" class="flex-1 py-2.5 text-xs font-bold rounded-xl bg-brand text-white shadow-sm transition">
+        Vytvořit Drop
       </button>
-      <button id="tab-requests-btn" onclick="switchVendorTab('requests')" class="flex-1 py-2.5 text-xs font-bold rounded-lg text-neutral-400 hover:text-white transition flex justify-center items-center gap-1.5 relative">
-        <i data-lucide="inbox" class="w-3.5 h-3.5"></i> Požadavky
-        <span id="requests-badge" class="hidden absolute top-1 right-2 w-2 h-2 rounded-full bg-emerald-400"></span>
+      <button id="tab-requests-btn" onclick="window.location.href='requests-vendor.html'" class="flex-1 py-2.5 text-xs font-bold rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+        Požadavky
+      </button>
+      <button id="tab-admin-btn" onclick="switchTab('admin')" class="flex-1 py-2.5 text-xs font-bold rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+        Admin & Logy
       </button>
     </div>
 
-    <div id="view-vendor-create" class="space-y-4">
-      
-      <!-- Pairing Request Active Banner -->
-      <div id="pairing-banner" class="hidden bg-emerald-950/40 border border-emerald-500/50 p-3 rounded-xl space-y-1">
-        <div class="flex justify-between items-center">
-          <span class="text-xs font-bold text-emerald-400 flex items-center gap-1">
-            <i data-lucide="link" class="w-3.5 h-3.5"></i> Párování s požadavkem <span id="pair-req-id">REQ-XXXX</span>
-          </span>
-          <button onclick="cancelPairing()" class="text-[10px] text-neutral-400 hover:text-white underline">Zrušit párování</button>
-        </div>
-        <p id="pair-req-details" class="text-[11px] text-neutral-300">Částka: 1000 Kč | Poznámka: ---</p>
+    <!-- TAB 1: VYTVOŘENÍ DROPŮ -->
+    <div id="tab-create" class="space-y-4">
+      <div id="pair-banner" class="hidden p-3 bg-brand/10 border border-brand/30 text-brand rounded-2xl text-xs font-bold flex justify-between items-center">
+        <span>🔗 Párování s požadavkem: <strong id="pair-req-id">---</strong></span>
+        <button onclick="cancelPairing()" class="underline text-[10px]">Zrušit</button>
       </div>
 
-      <!-- Map Container with Draggable Marker & GPS Button -->
-      <div class="relative">
-        <div id="map"></div>
-        <button type="button" onclick="locateVendorGPS()" class="absolute bottom-3 right-3 z-[1000] bg-neutral-950/90 border border-neutral-700 hover:border-emerald-500 text-emerald-400 p-2.5 rounded-xl shadow-lg backdrop-blur flex items-center gap-1.5 text-xs font-bold">
-          <i data-lucide="crosshair" class="w-4 h-4"></i> Moje GPS
+      <div class="rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 h-52 relative shadow-sm">
+        <div id="vendor-map" class="w-full h-full"></div>
+        <button type="button" onclick="locateGPS()" class="absolute bottom-3 right-3 z-[1000] bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl shadow-lg text-brand font-bold text-xs flex items-center gap-1">
+          <i data-lucide="crosshair" class="w-4 h-4"></i> GPS
         </button>
       </div>
 
       <div class="space-y-1">
-        <label class="text-xs text-neutral-400 flex justify-between">
-          <span>Popis úschovy (E2EE Zašifrováno)</span>
-          <span id="char-count">0/500</span>
-        </label>
-        <textarea id="desc-input" maxlength="500" oninput="updateCharCount()" placeholder="Návod k nalezení..." class="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm focus:border-emerald-500 focus:outline-none h-20 resize-none"></textarea>
+        <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Popis úschovy (E2EE)</label>
+        <textarea id="desc-input" maxlength="500" placeholder="Návod k nalezení..." class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand h-24 resize-none text-slate-900 dark:text-white"></textarea>
       </div>
 
       <div>
-        <label class="text-xs text-neutral-400 mb-1 block">Fotografie úschovy (Max 3)</label>
-        <label class="flex items-center justify-center gap-2 w-full p-3 bg-neutral-900 border border-dashed border-neutral-700 rounded-lg cursor-pointer text-xs text-neutral-300 hover:border-emerald-500">
-          <i data-lucide="camera" class="w-4 h-4 text-emerald-400"></i>
+        <label class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Fotografie</label>
+        <label class="flex items-center justify-center gap-2 w-full p-4 bg-white dark:bg-bg-cardDark border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300">
+          <i data-lucide="camera" class="w-4 h-4 text-brand"></i>
           <span id="file-label">Vybrat fotky</span>
           <input type="file" id="photo-input" multiple accept="image/*" onchange="handlePhotos(this)" class="hidden">
         </label>
         <div id="photo-previews" class="flex gap-2 mt-2"></div>
       </div>
 
-      <div class="flex items-center gap-2 bg-neutral-900 p-3 rounded-lg border border-neutral-800">
-        <input type="checkbox" id="burn-input" class="accent-emerald-500 w-4 h-4">
-        <label for="burn-input" class="text-xs text-neutral-300 flex items-center gap-1 cursor-pointer">
-          <i data-lucide="flame" class="w-3.5 h-3.5 text-amber-500"></i> Zničit po 1. zobrazení (Burn-after-read)
+      <div class="flex items-center gap-2 bg-white dark:bg-bg-cardDark p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <input type="checkbox" id="burn-input" class="accent-brand w-4 h-4">
+        <label for="burn-input" class="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+          🔥 Zničit po 1. zobrazení (Burn-after-read)
         </label>
       </div>
 
-      <div class="space-y-1.5">
-        <button id="vendor-submit-btn" onclick="createDrop()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-neutral-950 font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-2 shadow-lg">
-          <i data-lucide="lock" class="w-4 h-4"></i> Zašifrovat a Vygenerovat PIN
-        </button>
-        <p id="vendor-status" class="text-[11px] text-center text-emerald-400 font-mono min-h-[16px]"></p>
-      </div>
-    </div>
+      <button id="vendor-submit-btn" onclick="createDrop()" class="w-full py-4 bg-brand hover:bg-brand-dark text-white font-extrabold rounded-2xl shadow-lg shadow-brand/25 flex items-center justify-center gap-2 text-base active:scale-[0.98] transition">
+        <i data-lucide="lock" class="w-5 h-5"></i> Zašifrovat a Vygenerovat PIN
+      </button>
 
-    <div id="view-vendor-success" class="hidden space-y-4 text-center">
-      <div class="bg-neutral-900 p-6 rounded-2xl border border-neutral-800 space-y-3 shadow-xl">
-        <i data-lucide="shield-check" class="w-10 h-10 text-emerald-400 mx-auto"></i>
-        <h3 class="text-lg font-bold text-neutral-200">Dead Drop Vytvořen!</h3>
-        <p id="success-pairing-msg" class="text-xs text-neutral-400">Předejte tento PIN kód zákazníkovi.</p>
-
-        <div id="result-pin" class="text-3xl font-mono font-extrabold tracking-widest text-emerald-400 bg-neutral-950 py-3 rounded-lg border border-emerald-500/30 select-all">
+      <!-- VENDOR SUCCESS BOX -->
+      <div id="success-box" class="hidden p-6 bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-3xl text-center space-y-3">
+        <i data-lucide="check-circle-2" class="w-12 h-12 text-brand mx-auto"></i>
+        <h3 class="font-extrabold text-lg text-slate-900 dark:text-white">Dead Drop vytvořen!</h3>
+        <div id="result-pin" class="text-3xl font-mono font-black text-brand tracking-widest bg-slate-50 dark:bg-slate-900 py-3 rounded-2xl border border-brand/30">
           ------
         </div>
-
-        <button onclick="copyPin()" class="w-full py-3 bg-emerald-600 text-neutral-950 font-bold rounded-lg flex items-center justify-center gap-2">
-          <i data-lucide="copy" class="w-4 h-4"></i> Zkopírovat PIN
-        </button>
-        <button onclick="resetDropForm()" class="w-full py-2.5 bg-neutral-800 text-neutral-300 font-semibold rounded-lg text-xs">
-          Vytvořit další Drop
+        <button onclick="navigator.clipboard.writeText(document.getElementById('result-pin').innerText); alert('PIN zkopírován!');" class="w-full py-3 bg-brand text-white font-bold rounded-xl text-xs">
+          Zkopírovat PIN
         </button>
       </div>
     </div>
 
-    <div id="view-vendor-requests" class="hidden space-y-3">
-      <div class="flex items-center justify-between pb-1">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-          <i data-lucide="inbox" class="w-4 h-4 text-emerald-400"></i> Seznam příchozích objednávek
-        </h3>
-        <button onclick="renderRequests()" class="text-xs text-emerald-400 flex items-center gap-1 hover:underline">
-          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Obnovit
-        </button>
+    <!-- TAB 2: ADMIN & AUDIT LOGS -->
+    <div id="tab-admin" class="hidden space-y-4">
+      <div class="bg-white dark:bg-bg-cardDark p-5 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+            <i data-lucide="key" class="w-4 h-4 text-brand"></i> Změna Master PINu
+          </h3>
+        </div>
+        <div class="flex gap-2">
+          <input type="text" id="new-master-pin" placeholder="Nový Master PIN" class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs font-mono font-bold">
+          <button onclick="changeMasterPin()" class="px-4 bg-brand text-white font-bold rounded-xl text-xs">Uložit</button>
+        </div>
       </div>
 
-      <div id="requests-container" class="space-y-3"></div>
+      <div class="bg-white dark:bg-bg-cardDark p-5 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3">
+        <h3 class="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+          <i data-lucide="database" class="w-4 h-4 text-brand"></i> Uložené Drops v paměti
+        </h3>
+        <div id="admin-drops-list" class="space-y-2 text-xs"></div>
+      </div>
+
+      <div class="bg-white dark:bg-bg-cardDark p-5 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+            <i data-lucide="list" class="w-4 h-4 text-brand"></i> Auditní Logy Systému
+          </h3>
+          <button onclick="renderLogs()" class="text-[10px] text-brand font-bold">Obnovit</button>
+        </div>
+        <div id="logs-list" class="space-y-1.5 max-h-60 overflow-y-auto text-[11px] font-mono"></div>
+      </div>
     </div>
 
   </main>
 
-  <div id="admin-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[2000] hidden flex items-center justify-center p-4">
-    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 max-w-md w-full max-h-[80vh] flex flex-col justify-between space-y-4">
-      <div class="flex items-center justify-between border-b border-neutral-800 pb-2">
-        <h3 class="font-bold text-sm text-emerald-400 flex items-center gap-1.5">
-          <i data-lucide="settings" class="w-4 h-4"></i> Správa vytvořených dropů (Admin)
-        </h3>
-        <button onclick="toggleAdminModal(false)" class="text-neutral-400 hover:text-white">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-      
-      <div class="overflow-y-auto space-y-3 text-xs text-neutral-300 pr-1">
-        <p class="text-neutral-400">Přehled všech aktivních dropů a spárovaných požadavků:</p>
-        <div id="admin-items-list" class="space-y-2"></div>
-      </div>
-
-      <button onclick="clearAllData()" class="w-full py-2 bg-red-950 hover:bg-red-900 border border-red-800 text-red-300 font-bold rounded-lg text-xs">
-        Vymazat všechna data
-      </button>
-    </div>
-  </div>
-
-  <footer class="text-center text-[10px] text-neutral-600 pt-4">
-    Vendor Control Panel • Paired Drop Generation System
-  </footer>
-
   <script>
     lucide.createIcons();
 
-    let vendorMap = null;
-    let selectedMarker = null;
+    let vendorMap = null, selectedMarker = null;
     let currentPos = { lat: 50.0755, lng: 14.4378 };
     let photoFiles = [];
-    let activePairingRequest = null;
 
-    window.addEventListener('DOMContentLoaded', () => {
-      initVendorMap();
-      renderRequests();
-    });
-
-    // --- Toast Notifications ---
-    function notify({ title, message, type = 'info' }) {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      
-      const bgColors = {
-        success: 'bg-emerald-950/90 border-emerald-600 text-emerald-200',
-        error: 'bg-red-950/90 border-red-600 text-red-200',
-        warning: 'bg-amber-950/90 border-amber-600 text-amber-200',
-        info: 'bg-neutral-900/90 border-neutral-700 text-neutral-200'
-      };
-
-      const icons = {
-        success: 'check-circle-2',
-        error: 'alert-circle',
-        warning: 'flame',
-        info: 'info'
-      };
-
-      toast.className = `p-3.5 rounded-xl border backdrop-blur-md shadow-xl text-xs flex items-start gap-3 pointer-events-auto toast-anim ${bgColors[type] || bgColors.info}`;
-      toast.innerHTML = `
-        <i data-lucide="${icons[type]}" class="w-4 h-4 shrink-0 mt-0.5"></i>
-        <div class="flex-1">
-          <p class="font-bold">${title}</p>
-          <p class="text-[11px] opacity-90 mt-0.5">${message}</p>
-        </div>
-      `;
-
-      container.appendChild(toast);
-      lucide.createIcons();
-
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-      }, 3500);
+    function initTheme() {
+      const savedTheme = localStorage.getItem('mdd_theme') || 'dark';
+      if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
     }
 
-    // --- Tab Switching ---
-    function switchVendorTab(tab) {
-      document.getElementById('tab-create-btn').className = tab === 'create' ? "flex-1 py-2.5 text-xs font-bold rounded-lg bg-emerald-600 text-neutral-950 transition flex justify-center items-center gap-1.5" : "flex-1 py-2.5 text-xs font-bold rounded-lg text-neutral-400 hover:text-white transition flex justify-center items-center gap-1.5";
-      document.getElementById('tab-requests-btn').className = tab === 'requests' ? "flex-1 py-2.5 text-xs font-bold rounded-lg bg-emerald-600 text-neutral-950 transition flex justify-center items-center gap-1.5" : "flex-1 py-2.5 text-xs font-bold rounded-lg text-neutral-400 hover:text-white transition flex justify-center items-center gap-1.5";
-      
-      document.getElementById('view-vendor-create').classList.toggle('hidden', tab !== 'create');
-      document.getElementById('view-vendor-success').classList.add('hidden');
-      document.getElementById('view-vendor-requests').classList.toggle('hidden', tab !== 'requests');
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('mdd_theme', isDark ? 'dark' : 'light');
+    }
 
-      if (tab === 'requests') {
-        renderRequests();
-      } else {
-        setTimeout(() => { if (vendorMap) vendorMap.invalidateSize(); }, 200);
+    function logEvent(action, details = '') {
+      const logs = JSON.parse(localStorage.getItem('mdd_logs') || '[]');
+      logs.unshift({ time: new Date().toISOString(), action, details });
+      localStorage.setItem('mdd_logs', JSON.stringify(logs.slice(0, 100)));
+    }
+
+    function switchTab(tab) {
+      document.getElementById('tab-create-btn').className = tab === 'create' ? "flex-1 py-2.5 text-xs font-bold rounded-xl bg-brand text-white shadow-sm transition" : "flex-1 py-2.5 text-xs font-bold rounded-xl text-slate-500 dark:text-slate-400 transition";
+      document.getElementById('tab-admin-btn').className = tab === 'admin' ? "flex-1 py-2.5 text-xs font-bold rounded-xl bg-brand text-white shadow-sm transition" : "flex-1 py-2.5 text-xs font-bold rounded-xl text-slate-500 dark:text-slate-400 transition";
+      
+      document.getElementById('tab-create').classList.toggle('hidden', tab !== 'create');
+      document.getElementById('tab-admin').classList.toggle('hidden', tab !== 'admin');
+
+      if (tab === 'create') initVendorMap();
+      if (tab === 'admin') { renderAdminDrops(); renderLogs(); }
+    }
+
+    function checkPairing() {
+      const pairReqId = sessionStorage.getItem('pair_req_id');
+      if (pairReqId) {
+        document.getElementById('pair-banner').classList.remove('hidden');
+        document.getElementById('pair-req-id').innerText = pairReqId;
       }
     }
 
-    // --- Web Crypto API Helpers ---
+    function cancelPairing() {
+      sessionStorage.removeItem('pair_req_id');
+      document.getElementById('pair-banner').classList.add('hidden');
+    }
+
+    function initVendorMap() {
+      if (vendorMap) return;
+      setTimeout(() => {
+        vendorMap = L.map('vendor-map', { zoomControl: false }).setView([currentPos.lat, currentPos.lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(vendorMap);
+        selectedMarker = L.marker([currentPos.lat, currentPos.lng], { draggable: true }).addTo(vendorMap);
+        selectedMarker.on('dragend', e => { currentPos = e.target.getLatLng(); });
+      }, 100);
+    }
+
+    function locateGPS() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          currentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          if (vendorMap) {
+            vendorMap.setView([currentPos.lat, currentPos.lng], 17);
+            selectedMarker.setLatLng([currentPos.lat, currentPos.lng]);
+          }
+        });
+      }
+    }
+
+    function handlePhotos(input) {
+      photoFiles = Array.from(input.files).slice(0, 3);
+      document.getElementById('file-label').innerText = `Vybráno ${photoFiles.length} fotek`;
+    }
+
+    function generatePin() {
+      const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+      let pin = '';
+      for (let i = 0; i < 6; i++) pin += chars.charAt(Math.floor(Math.random() * chars.length));
+      return pin;
+    }
+
     async function hashPin(pin) {
       const msgUint8 = new TextEncoder().encode(pin.toUpperCase());
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
@@ -266,276 +261,49 @@
       return { cipherText: bufferToBase64(encBuffer), salt: bufferToBase64(salt.buffer), iv: bufferToBase64(iv.buffer) };
     }
 
-    // --- Map & GPS Engine ---
-    function initVendorMap() {
-      if (vendorMap) return;
-      setTimeout(() => {
-        vendorMap = L.map('map').setView([currentPos.lat, currentPos.lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(vendorMap);
-        
-        selectedMarker = L.marker([currentPos.lat, currentPos.lng], { draggable: true }).addTo(vendorMap);
-        
-        selectedMarker.on('dragend', function(e) {
-          const latlng = e.target.getLatLng();
-          currentPos = { lat: latlng.lat, lng: latlng.lng };
-          notify({ title: 'Poloha upravena', message: 'Špendlík posunut na novou pozici.', type: 'info' });
-        });
-
-        vendorMap.on('click', function(e) {
-          currentPos = { lat: e.latlng.lat, lng: e.latlng.lng };
-          selectedMarker.setLatLng(e.latlng);
-          notify({ title: 'Poloha nastavena', message: 'Špendlík přemístěn.', type: 'info' });
-        });
-      }, 200);
-    }
-
-    function locateVendorGPS() {
-      if (navigator.geolocation) {
-        notify({ title: 'Vyhledávám GPS...', message: 'Zjišťuji přesnou polohu.', type: 'info' });
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            currentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            if (vendorMap && selectedMarker) {
-              vendorMap.setView([currentPos.lat, currentPos.lng], 17);
-              selectedMarker.setLatLng([currentPos.lat, currentPos.lng]);
-            }
-            notify({ title: 'GPS Zaměřeno!', message: 'Poloha na mapě aktualizována.', type: 'success' });
-          },
-          (err) => {
-            notify({ title: 'Chyba GPS', message: 'Nepodařilo se získat polohu.', type: 'error' });
-          },
-          { enableHighAccuracy: true }
-        );
-      }
-    }
-
-    function handlePhotos(input) {
-      photoFiles = Array.from(input.files).slice(0, 3);
-      const previewContainer = document.getElementById('photo-previews');
-      previewContainer.innerHTML = '';
-      photoFiles.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          const thumb = document.createElement('img');
-          thumb.src = e.target.result;
-          thumb.className = 'w-16 h-16 object-cover rounded-lg border border-neutral-700';
-          previewContainer.appendChild(thumb);
-        };
-        reader.readAsDataURL(file);
-      });
-      document.getElementById('file-label').innerText = `Vybráno ${photoFiles.length} fotek`;
-      notify({ title: 'Fotografie načteny', message: `Připraveno ${photoFiles.length} fotek.`, type: 'info' });
-    }
-
-    function processImage(file) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const maxDim = 800; let w = img.width, h = img.height;
-            if (w > h && w > maxDim) { h *= maxDim / w; w = maxDim; }
-            else if (h > maxDim) { w *= maxDim / h; h = maxDim; }
-            canvas.width = w; canvas.height = h;
-            ctx.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', 0.6));
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function generatePin() {
-      const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-      let pin = '';
-      for (let i = 0; i < 6; i++) pin += chars.charAt(Math.floor(Math.random() * chars.length));
-      return pin;
-    }
-
-    // --- Drop Creation & Request Pairing Engine ---
     async function createDrop() {
-      const btn = document.getElementById('vendor-submit-btn');
-      const status = document.getElementById('vendor-status');
-      btn.disabled = true;
+      const pin = generatePin();
+      const pinH = await hashPin(pin);
 
-      try {
-        const cleanPhotos = [];
-        for (let i = 0; i < photoFiles.length; i++) {
-          status.innerText = `Anonymizuji fotku ${i + 1}/${photoFiles.length}...`;
-          cleanPhotos.push(await processImage(photoFiles[i]));
-        }
+      const encryptedPackage = await encryptData({
+        desc: document.getElementById('desc-input').value,
+        photos: []
+      }, pin);
 
-        const pin = generatePin();
-        const pinH = await hashPin(pin);
+      const pairReqId = sessionStorage.getItem('pair_req_id');
 
-        status.innerText = "Šifruji data...";
-        const encryptedPackage = await encryptData({
-          desc: document.getElementById('desc-input').value,
-          photos: cleanPhotos
-        }, pin);
+      const dropRecord = {
+        pin: pin,
+        lat: currentPos.lat,
+        lng: currentPos.lng,
+        encrypted: encryptedPackage,
+        burn: document.getElementById('burn-input').checked,
+        created: Date.now(),
+        linkedReqId: pairReqId || null,
+        status: 'active'
+      };
 
-        status.innerText = "Ukládám...";
-        
-        const dropRecord = {
-          pin: pin,
-          lat: currentPos.lat,
-          lng: currentPos.lng,
-          encrypted: encryptedPackage,
-          burn: document.getElementById('burn-input').checked,
-          linkedRequestId: activePairingRequest ? activePairingRequest.reqId : null,
-          created: Date.now()
-        };
+      localStorage.setItem(`drop_${pinH}`, JSON.stringify(dropRecord));
 
-        // Save drop into storage
-        localStorage.setItem(`drop_${pinH}`, JSON.stringify(dropRecord));
-
-        // If paired with a request, update request status
-        if (activePairingRequest) {
-          const requests = JSON.parse(localStorage.getItem('my_requests') || '[]');
-          const reqIndex = requests.findIndex(r => r.reqId === activePairingRequest.reqId);
-          if (reqIndex !== -1) {
-            requests[reqIndex].status = 'completed';
-            requests[reqIndex].linkedPin = pin;
-            localStorage.setItem('my_requests', JSON.stringify(requests));
-          }
-        }
-
-        status.innerText = "";
-        document.getElementById('view-vendor-create').classList.add('hidden');
-        document.getElementById('view-vendor-success').classList.remove('hidden');
-        document.getElementById('result-pin').innerText = pin;
-
-        if (activePairingRequest) {
-          document.getElementById('success-pairing-msg').innerText = `Drop úspěšně spárován s požiadavkem ${activePairingRequest.reqId}!`;
-          notify({ title: 'Drop Spárován!', message: `Požadavek ${activePairingRequest.reqId} byl vyřízen.`, type: 'success' });
-        } else {
-          document.getElementById('success-pairing-msg').innerText = 'Předejte tento PIN kód zákazníkovi.';
-          notify({ title: 'Dead Drop Vytvořen!', message: `PIN ${pin} vygenerován.`, type: 'success' });
-        }
-
-        cancelPairing();
-
-      } catch (err) {
-        console.error(err);
-        status.innerText = "Chyba při vytváření.";
-        notify({ title: 'Chyba', message: 'Nepodařilo se vytvořit drop.', type: 'error' });
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    function resetDropForm() {
-      document.getElementById('desc-input').value = '';
-      document.getElementById('photo-input').value = '';
-      document.getElementById('photo-previews').innerHTML = '';
-      document.getElementById('file-label').innerText = 'Vybrát fotky';
-      photoFiles = [];
-      document.getElementById('view-vendor-success').classList.add('hidden');
-      document.getElementById('view-vendor-create').classList.remove('hidden');
-      setTimeout(() => { if (vendorMap) vendorMap.invalidateSize(); }, 200);
-    }
-
-    // --- Request Management & Pairing Logic ---
-    function renderRequests() {
-      const container = document.getElementById('requests-container');
-      container.innerHTML = '';
-      
-      const requests = JSON.parse(localStorage.getItem('my_requests') || '[]');
-
-      if (requests.length === 0) {
-        container.innerHTML = '<div class="p-8 text-center text-xs text-neutral-500 bg-neutral-900/50 rounded-2xl border border-neutral-800">Žádné příchozí objednávky.</div>';
-        return;
-      }
-
-      requests.forEach((req, idx) => {
-        const isCompleted = req.status === 'completed';
-        const card = document.createElement('div');
-        card.className = `bg-neutral-900 border ${isCompleted ? 'border-emerald-800/40 bg-emerald-950/10' : 'border-neutral-800'} rounded-2xl p-4 space-y-3 text-xs`;
-        
-        card.innerHTML = `
-          <div class="flex justify-between items-start border-b border-neutral-800 pb-2">
-            <div>
-              <span class="font-mono font-bold ${isCompleted ? 'text-emerald-400' : 'text-neutral-200'}">${req.reqId}</span>
-              <span class="ml-2 text-[10px] px-2 py-0.5 rounded font-bold uppercase ${isCompleted ? 'bg-emerald-900/60 text-emerald-300' : 'bg-amber-950/60 text-amber-300'}">
-                ${isCompleted ? 'Vyřízeno' : 'Čeká na vyřízení'}
-              </span>
-              <p class="text-[10px] text-neutral-500 mt-0.5">${new Date(req.date).toLocaleString('cs-CZ')}</p>
-            </div>
-            <span class="text-sm font-extrabold text-emerald-400 font-mono">${req.amount} Kč</span>
-          </div>
-
-          <div class="space-y-1">
-            <p class="text-[10px] text-neutral-500 uppercase tracking-wider font-semibold">PaysafeCard Kupon</p>
-            <p class="font-mono text-neutral-200 bg-neutral-950 p-2 rounded border border-neutral-800 select-all">
-              ${req.pscCode ? req.pscCode : '<span class="text-neutral-600 italic">Nepřiložen (Platba při předání)</span>'}
-            </p>
-          </div>
-
-          ${req.note ? `
-            <div>
-              <p class="text-[10px] text-neutral-500 uppercase tracking-wider font-semibold">Poznámka / Oblast</p>
-              <p class="text-neutral-300 bg-neutral-950/50 p-2 rounded">${req.note}</p>
-            </div>
-          ` : ''}
-
-          ${isCompleted && req.linkedPin ? `
-            <div class="bg-emerald-950/40 border border-emerald-800/50 p-2 rounded flex justify-between items-center">
-              <span class="text-[10px] text-neutral-400">Spárovaný PIN:</span>
-              <span class="font-mono font-bold text-emerald-400 text-sm tracking-wider">${req.linkedPin}</span>
-            </div>
-          ` : ''}
-
-          <div class="pt-1 flex gap-2">
-            ${!isCompleted ? `
-              <button onclick="startPairing('${req.reqId}', ${req.amount}, '${req.note || ''}')" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-neutral-950 font-bold rounded-lg text-center flex items-center justify-center gap-1">
-                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Vytvořit Drop pro požadavek
-              </button>
-            ` : ''}
-            <button onclick="deleteRequest(${idx})" class="px-3 py-2 bg-neutral-800 hover:bg-red-950 hover:text-red-400 text-neutral-400 rounded-lg">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            </button>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-      lucide.createIcons();
-    }
-
-    function startPairing(reqId, amount, note) {
-      activePairingRequest = { reqId, amount, note };
-      document.getElementById('pair-req-id').innerText = reqId;
-      document.getElementById('pair-req-details').innerText = `Částka: ${amount} Kč | Poznámka: ${note || '---'}`;
-      document.getElementById('pairing-banner').classList.remove('hidden');
-      switchVendorTab('create');
-      notify({ title: 'Párování Aktivní', message: `Vytváříte drop pro požadavek ${reqId}`, type: 'info' });
-    }
-
-    function cancelPairing() {
-      activePairingRequest = null;
-      document.getElementById('pairing-banner').classList.add('hidden');
-    }
-
-    function deleteRequest(idx) {
-      if (confirm('Smazat tento požadavek?')) {
+      if (pairReqId) {
         const requests = JSON.parse(localStorage.getItem('my_requests') || '[]');
-        requests.splice(idx, 1);
-        localStorage.setItem('my_requests', JSON.stringify(requests));
-        renderRequests();
-        notify({ title: 'Smazáno', message: 'Požadavek odstraněn.', type: 'warning' });
+        const req = requests.find(r => r.reqId === pairReqId);
+        if (req) {
+          req.status = 'completed';
+          req.assignedPin = pin;
+          localStorage.setItem('my_requests', JSON.stringify(requests));
+        }
+        cancelPairing();
       }
+
+      logEvent('DROP_CREATED', `PIN: ${pin}, LinkedReq: ${pairReqId || 'none'}`);
+
+      document.getElementById('result-pin').innerText = pin;
+      document.getElementById('success-box').classList.remove('hidden');
     }
 
-    // --- Admin Modal Functions ---
-    function toggleAdminModal(show) {
-      document.getElementById('admin-modal').classList.toggle('hidden', !show);
-      if (show) renderAdminItems();
-    }
-
-    function renderAdminItems() {
-      const list = document.getElementById('admin-items-list');
+    function renderAdminDrops() {
+      const list = document.getElementById('admin-drops-list');
       list.innerHTML = '';
       let count = 0;
       for (let i = 0; i < localStorage.length; i++) {
@@ -544,37 +312,44 @@
           count++;
           const data = JSON.parse(localStorage.getItem(key));
           const item = document.createElement('div');
-          item.className = 'p-2.5 bg-neutral-950 rounded-lg border border-neutral-800 space-y-1';
+          item.className = 'p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex justify-between items-center';
           item.innerHTML = `
-            <div class="flex justify-between items-center">
-              <span class="font-bold text-emerald-400 font-mono">PIN: ${data.pin || 'Aktivní'}</span>
-              <span class="text-[10px] text-neutral-500">${data.burn ? 'Burn-after-read' : 'Trvalý'}</span>
+            <div>
+              <span class="font-mono font-bold text-brand">PIN: ${data.pin}</span>
+              <span class="text-[10px] text-slate-400 block">${data.status || 'Aktivní'}</span>
             </div>
-            ${data.linkedRequestId ? `<p class="text-[10px] text-emerald-300 font-mono">Spárovaný požadavek: ${data.linkedRequestId}</p>` : ''}
+            <button onclick="localStorage.removeItem('${key}'); renderAdminDrops();" class="text-red-500 font-bold text-xs">Smazat</button>
           `;
           list.appendChild(item);
         }
       }
-      if (count === 0) list.innerHTML = '<p class="text-neutral-500 text-center py-2">Žádné vytvořené drops.</p>';
+      if (count === 0) list.innerHTML = '<p class="text-slate-400 text-center py-2">Žádné uložené drops.</p>';
     }
 
-    function clearAllData() {
-      if (confirm('Vymazat všechna data?')) {
-        localStorage.clear();
-        renderAdminItems();
-        renderRequests();
-        notify({ title: 'Vyčištěno', message: 'Všechna data odstraněna.', type: 'warning' });
+    function renderLogs() {
+      const list = document.getElementById('logs-list');
+      list.innerHTML = '';
+      const logs = JSON.parse(localStorage.getItem('mdd_logs') || '[]');
+      logs.forEach(l => {
+        const item = document.createElement('div');
+        item.className = 'p-2 bg-slate-50 dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800';
+        item.innerHTML = `<span class="text-slate-400">${new Date(l.time).toLocaleTimeString()}</span> <strong class="text-brand">${l.action}</strong> ${l.details}`;
+        list.appendChild(item);
+      });
+    }
+
+    function changeMasterPin() {
+      const pin = document.getElementById('new-master-pin').value.trim();
+      if (pin.length >= 4) {
+        localStorage.setItem('mdd_master_pin', pin);
+        alert('Master PIN změněn!');
+        logEvent('MASTER_PIN_CHANGED');
       }
     }
 
-    function copyPin() {
-      navigator.clipboard.writeText(document.getElementById('result-pin').innerText);
-      notify({ title: 'Zkopírováno', message: 'PIN vkládán do schránky.', type: 'info' });
-    }
-
-    function updateCharCount() {
-      document.getElementById('char-count').innerText = `${document.getElementById('desc-input').value.length}/500`;
-    }
+    initTheme();
+    checkPairing();
+    initVendorMap();
   </script>
 </body>
 </html>
