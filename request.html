@@ -1,100 +1,100 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="cs" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Požádat o Dead Drop</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    body { background-color: #0a0a0a; color: #f5f5f5; user-select: none; }
-  </style>
-</head>
-<body class="min-h-screen flex flex-col justify-between p-4 font-sans antialiased">
+  <title>Požádat o nový drop — My Dead Drops</title>
 
-  <!-- Header -->
-  <header class="flex items-center justify-between border-b border-neutral-800 pb-3">
-    <a href="index.html" class="flex items-center gap-2 text-emerald-400 font-bold tracking-wider">
-      <i data-lucide="shield-lock" class="w-6 h-6"></i>
-      <span>MY DEAD DROPS</span>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+          colors: {
+            brand: { DEFAULT: '#00b87c', light: '#00e699', dark: '#008f60' },
+            bg: { light: '#f4f6f8', dark: '#0a0f14', cardLight: '#ffffff', cardDark: '#121921' }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased">
+
+  <!-- HEADER -->
+  <header class="px-5 py-4 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md bg-white/70 dark:bg-bg-dark/70 border-b border-slate-200/60 dark:border-slate-800/60">
+    <a href="index.html" class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-full bg-brand/10 dark:bg-brand/20 flex items-center justify-center text-brand dark:text-brand-light">
+        <i data-lucide="map-pin" class="w-5 h-5 fill-current"></i>
+      </div>
+      <span class="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white">My Dead Drops</span>
     </a>
-    <a href="index.html" class="text-xs bg-neutral-800 text-neutral-300 px-3 py-1.5 rounded-lg flex items-center gap-1">
-      <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Zpět
-    </a>
+
+    <button onclick="document.documentElement.classList.toggle('dark')" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300">
+      <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+      <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+    </button>
   </header>
 
-  <main class="my-auto w-full max-w-md mx-auto py-6">
-    <div id="request-form-card" class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-5 shadow-xl">
-      
-      <div class="space-y-1 text-center">
-        <h2 class="text-lg font-bold text-neutral-100 flex items-center justify-center gap-2">
-          <i data-lucide="shopping-bag" class="w-5 h-5 text-emerald-400"></i> Požadavek na nový Drop
-        </h2>
-        <p class="text-xs text-neutral-400">Zadejte požadovanou hodnotu a kupon.</p>
-      </div>
-
-      <form onsubmit="submitRequest(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-neutral-300 mb-1">Požadovaná částka (Kč) *</label>
-          <div class="relative">
-            <input type="number" id="amount-input" required min="100" step="100" placeholder="1000" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 pr-10 text-sm text-emerald-400 font-mono font-bold focus:border-emerald-500 focus:outline-none">
-            <span class="absolute right-3 top-3 text-xs text-neutral-500 font-bold">Kč</span>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-neutral-300 mb-1">Kód kuponu PaysafeCard (Volitelné)</label>
-          <input type="text" id="psc-input" placeholder="0000 - 0000 - 0000 - 0000 (Nepovinné)" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-sm text-neutral-200 font-mono tracking-widest focus:border-emerald-500 focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-neutral-300 mb-1">Poznámka / Oblast (Volitelné)</label>
-          <textarea id="note-input" maxlength="200" placeholder="Např. Ostrava, lesopark..." class="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-xs text-neutral-300 focus:border-emerald-500 focus:outline-none h-20 resize-none"></textarea>
-        </div>
-
-        <button type="submit" id="submit-btn" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-neutral-950 font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-2">
-          <i data-lucide="send" class="w-4 h-4"></i> Odeslat požadavek
-        </button>
-      </form>
+  <!-- FORM CONTAINER -->
+  <main class="flex-1 my-auto px-4 py-8 max-w-md mx-auto w-full space-y-6">
+    <div class="space-y-1.5">
+      <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Požádat o nový drop</h1>
+      <p class="text-xs text-slate-500 dark:text-slate-400">Vyplň formulář a odešli žádost. Žádné osobní údaje nevyžadujeme.</p>
     </div>
 
-    <div id="success-card" class="hidden bg-neutral-900 border border-neutral-800 rounded-2xl p-6 text-center space-y-4 shadow-xl">
-      <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto"></i>
-      <h3 class="text-lg font-bold text-neutral-100">Požadavek přijat!</h3>
-      <p class="text-xs text-neutral-400">Váš požadavek byl úspěšně zaznamenán pro Vendora.</p>
-      
-      <div class="bg-neutral-950 p-3 rounded-xl border border-neutral-800 text-xs font-mono text-emerald-400">
-        ID Požadavku: <span id="req-id">------</span>
+    <form onsubmit="submitRequest(event)" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Částka (Kč) *</label>
+        <input type="number" required placeholder="Např. 500" class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand text-slate-900 dark:text-white">
       </div>
 
-      <a href="index.html" class="block w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold rounded-xl text-xs">
-        Zpět na Zákaznický Portál
-      </a>
+      <div>
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">PaysafeCard kód (volitelně)</label>
+        <input type="text" placeholder="Např. 1234-5678-9012-3456" class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand text-slate-900 dark:text-white">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Preferovaná lokalita</label>
+        <input type="text" placeholder="Např. centrum, park, u mostu..." class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand text-slate-900 dark:text-white">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Poznámka</label>
+        <textarea placeholder="Doplň další informace..." class="w-full bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium focus:outline-none focus:border-brand h-24 resize-none text-slate-900 dark:text-white"></textarea>
+      </div>
+
+      <button type="submit" class="w-full py-4 bg-brand hover:bg-brand-dark text-white font-extrabold rounded-2xl shadow-lg shadow-brand/25 flex items-center justify-center gap-2 text-base active:scale-[0.98] transition">
+        <i data-lucide="send" class="w-5 h-5"></i> Odeslat žádost
+      </button>
+    </form>
+
+    <div class="text-center flex items-center justify-center gap-1.5 text-slate-400 dark:text-slate-500 text-xs">
+      <i data-lucide="lock" class="w-3.5 h-3.5"></i> 100% anonymní. Bez registrace.
     </div>
   </main>
 
-  <footer class="text-center text-[10px] text-neutral-600 pt-4">
-    Anonymní požadavek
+  <!-- FOOTER BRANDING -->
+  <footer class="py-6 text-center space-y-1 text-slate-400 dark:text-slate-600 border-t border-slate-200/60 dark:border-slate-800/60">
+    <div class="flex items-center justify-center gap-1.5 text-brand font-bold text-sm">
+      <i data-lucide="map-pin" class="w-4 h-4 fill-current"></i> My Dead Drops
+    </div>
+    <p class="text-[10px] uppercase tracking-widest font-semibold">SKRYJ. SDÍLEJ. OBJEVUJ.</p>
   </footer>
 
   <script>
     lucide.createIcons();
-
     function submitRequest(e) {
       e.preventDefault();
-      const amount = document.getElementById('amount-input').value;
-      const pscCode = document.getElementById('psc-input').value.trim();
-      const note = document.getElementById('note-input').value;
-
-      const reqId = 'REQ-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-      
-      const requests = JSON.parse(localStorage.getItem('my_requests') || '[]');
-      requests.push({ reqId, amount, pscCode, note, status: 'pending', date: new Date().toISOString() });
-      localStorage.setItem('my_requests', JSON.stringify(requests));
-
-      document.getElementById('req-id').innerText = reqId;
-      document.getElementById('request-form-card').classList.add('hidden');
-      document.getElementById('success-card').classList.remove('hidden');
+      alert('Žádost byla anonymně odeslána!');
+      window.location.href = 'index.html';
     }
   </script>
 </body>
