@@ -4,15 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>My Dead Drops</title>
-  
+
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0d131a">
-  
-  <!-- Google Fonts & Tailwind CSS -->
+  <meta name="theme-color" content="#0a0f14">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -21,17 +20,8 @@
         extend: {
           fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
           colors: {
-            brand: {
-              DEFAULT: '#00b87c',
-              light: '#00e699',
-              dark: '#008f60'
-            },
-            bg: {
-              light: '#f4f6f8',
-              dark: '#0a0f14',
-              cardLight: '#ffffff',
-              cardDark: '#121921'
-            }
+            brand: { DEFAULT: '#00b87c', light: '#00e699', dark: '#008f60' },
+            bg: { light: '#f4f6f8', dark: '#0a0f14', cardLight: '#ffffff', cardDark: '#121921' }
           }
         }
       }
@@ -44,13 +34,10 @@
 
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s, color 0.3s; }
-    .pin-input:focus { border-color: #00b87c; box-shadow: 0 0 0 2px rgba(0,184,124,0.2); }
-    #compass-arrow { transition: transform 0.2s ease-out; }
-    .hero-bg-light { background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(244,246,248,1) 100%), url('https://images.unsplash.com/photo-1511497584788-876761c11969?q=80&w=1000&auto=format&fit=crop'); background-size: cover; background-position: center; }
-    .hero-bg-dark { background: linear-gradient(180deg, rgba(10,15,20,0.6) 0%, rgba(10,15,20,1) 100%), url('https://images.unsplash.com/photo-1511497584788-876761c11969?q=80&w=1000&auto=format&fit=crop'); background-size: cover; background-position: center; }
+    #compass-arrow-container { transition: transform 0.15s ease-out; }
   </style>
 </head>
-<body class="bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased selection:bg-brand selection:text-white">
+<body class="bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased">
 
   <!-- HEADER -->
   <header class="px-5 py-4 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md bg-white/70 dark:bg-bg-dark/70 border-b border-slate-200/60 dark:border-slate-800/60">
@@ -62,28 +49,27 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <!-- Theme Switcher -->
-      <button onclick="toggleTheme()" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300 transition">
+      <button onclick="toggleTheme()" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300">
         <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
         <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
       </button>
-      <button onclick="toggleMenu()" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300 transition">
-        <i data-lucide="menu" class="w-5 h-5"></i>
-      </button>
+      <a href="vendor.html" class="p-2.5 rounded-full hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300" title="Vendor Portál">
+        <i data-lucide="shield-check" class="w-5 h-5 text-brand"></i>
+      </a>
     </div>
   </header>
 
-  <!-- MAIN CONTENT -->
+  <!-- MAIN CONTAINER -->
   <main class="flex-1 flex flex-col justify-center px-4 py-6 max-w-md mx-auto w-full">
 
-    <!-- OBRAZOVKA 1: VSTUPNÍ PIN PORTÁL -->
+    <!-- OBRAZOVKA 1: zadání PINu -->
     <div id="screen-pin" class="space-y-8 text-center my-auto">
       <div class="space-y-2">
         <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Objev skrytá místa.</h1>
         <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Zadej 6místný PIN a odemkni úschovu.</p>
       </div>
 
-      <!-- PIN INPUT BOXES -->
+      <!-- 6 x PIN BOX -->
       <div class="flex justify-center gap-2" id="pin-container">
         <input type="text" maxlength="1" class="pin-box w-12 h-14 text-center text-2xl font-bold bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl focus:outline-none focus:border-brand shadow-sm uppercase dark:text-white">
         <input type="text" maxlength="1" class="pin-box w-12 h-14 text-center text-2xl font-bold bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl focus:outline-none focus:border-brand shadow-sm uppercase dark:text-white">
@@ -93,7 +79,9 @@
         <input type="text" maxlength="1" class="pin-box w-12 h-14 text-center text-2xl font-bold bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 rounded-2xl focus:outline-none focus:border-brand shadow-sm uppercase dark:text-white">
       </div>
 
-      <button onclick="submitPin()" class="w-full py-4 bg-brand hover:bg-brand-dark text-white font-extrabold rounded-2xl shadow-lg shadow-brand/25 flex items-center justify-center gap-2 text-base active:scale-[0.98] transition">
+      <p id="pin-error" class="text-xs font-bold text-red-500 hidden"></p>
+
+      <button onclick="revealDrop()" class="w-full py-4 bg-brand hover:bg-brand-dark text-white font-extrabold rounded-2xl shadow-lg shadow-brand/25 flex items-center justify-center gap-2 text-base active:scale-[0.98] transition">
         Odemknout <i data-lucide="arrow-right" class="w-5 h-5"></i>
       </button>
 
@@ -104,30 +92,30 @@
 
     <!-- OBRAZOVKA 2: DETAIL ÚSCHOVY -->
     <div id="screen-detail" class="hidden space-y-5">
-      <!-- Top Nav Header -->
       <div class="flex items-center justify-between">
         <button onclick="showScreen('screen-pin')" class="p-2 rounded-xl bg-white dark:bg-bg-cardDark border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200">
           <i data-lucide="arrow-left" class="w-5 h-5"></i>
         </button>
-        <h2 id="drop-title" class="font-extrabold text-lg text-slate-900 dark:text-white">Tajná krabička</h2>
+        <h2 id="drop-title" class="font-extrabold text-lg text-slate-900 dark:text-white">Úschova odemčena</h2>
         <div class="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-200/60 dark:bg-slate-800/60 px-3 py-1.5 rounded-full">
-          <i data-lucide="navigation" class="w-3.5 h-3.5 text-brand"></i> <span id="dist-label">320 m</span>
+          <i data-lucide="navigation" class="w-3.5 h-3.5 text-brand"></i> <span id="dist-label">-- m</span>
         </div>
       </div>
 
-      <!-- Galerie Fotek -->
-      <div class="relative rounded-3xl overflow-hidden shadow-lg border border-slate-200/80 dark:border-slate-800 h-52 bg-slate-900">
-        <img id="detail-img" src="https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover">
-        <div class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-bold text-white tracking-wider">
-          1/3
-        </div>
+      <div id="burn-warning" class="hidden p-3 bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-2xl text-xs text-center font-bold">
+        🔥 Úschova byla po otevření trvale smazána.
+      </div>
+
+      <!-- Galerie Fotografií -->
+      <div id="res-photos-container" class="hidden space-y-2">
+        <div id="res-photos" class="grid grid-cols-3 gap-2"></div>
       </div>
 
       <!-- Popis -->
       <div class="bg-white dark:bg-bg-cardDark p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 space-y-1.5 shadow-sm">
         <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Popis</h3>
-        <p id="detail-desc" class="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
-          Malá kovová krabička za kamenem. Hledej u starého mostu. 🌉
+        <p id="res-desc" class="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
+          Bez popisu.
         </p>
       </div>
 
@@ -136,7 +124,7 @@
         <div id="mini-map" class="w-full h-full"></div>
       </div>
 
-      <!-- Akční Tlačítka -->
+      <!-- Tlačítko pro spuštění AR Kompasu -->
       <button onclick="showScreen('screen-compass')" class="w-full py-4 bg-brand dark:bg-brand-light text-white dark:text-slate-950 font-extrabold rounded-2xl shadow-lg shadow-brand/20 flex items-center justify-center gap-2 active:scale-[0.98] transition">
         <i data-lucide="navigation" class="w-5 h-5"></i> Spustit AR kompas
       </button>
@@ -151,15 +139,13 @@
       </div>
     </div>
 
-    <!-- OBRAZOVKA 3: AR KOMPAS (FULLSCREEN COMPASS) -->
-    <div id="screen-compass" class="hidden fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6 text-white bg-cover bg-center" style="background-image: linear-gradient(180deg, rgba(10,15,20,0.7) 0%, rgba(10,15,20,0.95) 100%), url('https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=1000&auto=format&fit=crop');">
-      
-      <!-- Compass Header -->
+    <!-- OBRAZOVKA 3: FULLSCREEN AR KOMPAS -->
+    <div id="screen-compass" class="hidden fixed inset-0 bg-slate-950 z-50 flex flex-col justify-between p-6 text-white bg-cover bg-center">
       <div class="flex items-center justify-between">
         <div class="opacity-0">.</div>
         <div class="text-center">
           <p class="text-xs uppercase tracking-widest text-slate-300 font-bold">Jdi tímto směrem</p>
-          <p id="compass-dist-top" class="text-3xl font-extrabold tracking-tight mt-0.5">320 m</p>
+          <p id="compass-dist-top" class="text-3xl font-extrabold tracking-tight mt-0.5">--- m</p>
           <p class="text-[11px] text-slate-400">Přímá vzdálenost</p>
         </div>
         <button onclick="showScreen('screen-detail')" class="p-3 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition">
@@ -167,9 +153,8 @@
         </button>
       </div>
 
-      <!-- AR Compass Ring -->
+      <!-- AR Růže Kompasu -->
       <div class="relative w-64 h-64 mx-auto my-auto flex items-center justify-center">
-        <!-- Růže kompasu -->
         <div class="absolute inset-0 rounded-full border-2 border-white/20 flex items-center justify-center">
           <span class="absolute top-2 font-bold text-xs text-slate-400">N</span>
           <span class="absolute right-2 font-bold text-xs text-slate-400">E</span>
@@ -177,25 +162,23 @@
           <span class="absolute left-2 font-bold text-xs text-slate-400">W</span>
         </div>
         
-        <!-- Otočná šipka -->
-        <div id="compass-arrow-container" class="w-full h-full flex items-center justify-center transition-transform duration-200">
+        <div id="compass-arrow-container" class="w-full h-full flex items-center justify-center">
           <i data-lucide="navigation" class="w-24 h-24 text-brand-light fill-brand-light/30"></i>
         </div>
       </div>
 
-      <!-- Compass Footer Status -->
       <div class="space-y-3">
-        <div class="bg-black/40 backdrop-blur-md border border-white/10 p-3.5 rounded-2xl text-center text-xs font-medium text-slate-300">
+        <div id="compass-status-text" class="bg-black/40 backdrop-blur-md border border-white/10 p-3.5 rounded-2xl text-center text-xs font-medium text-slate-300">
           Drž telefon před sebou a následuj šipku.
         </div>
         
         <div class="grid grid-cols-2 gap-3 text-center">
           <div class="bg-black/50 backdrop-blur-md border border-white/10 p-3 rounded-2xl">
-            <p id="compass-dist-bottom" class="text-base font-extrabold text-white">320 m</p>
+            <p id="compass-dist-bottom" class="text-base font-extrabold text-white">--- m</p>
             <p class="text-[10px] uppercase tracking-wider text-slate-400">vzdálenost</p>
           </div>
           <div class="bg-black/50 backdrop-blur-md border border-white/10 p-3 rounded-2xl">
-            <p id="compass-dir-bottom" class="text-base font-extrabold text-white">NE</p>
+            <p id="compass-dir-bottom" class="text-base font-extrabold text-white">---</p>
             <p class="text-[10px] uppercase tracking-wider text-slate-400">směr</p>
           </div>
         </div>
@@ -204,13 +187,13 @@
 
   </main>
 
-  <!-- SPODNÍ NAVIGAČNÍ LIŠTA (BOTTOM NAV) -->
+  <!-- SPODNÍ NAVIGAČNÍ LIŠTA -->
   <nav class="sticky bottom-0 z-40 bg-white/80 dark:bg-bg-dark/80 backdrop-blur-md border-t border-slate-200/60 dark:border-slate-800/60 px-6 py-2.5 max-w-md mx-auto w-full flex justify-around items-center text-slate-400 dark:text-slate-500">
     <button onclick="showScreen('screen-pin')" class="flex flex-col items-center gap-1 text-brand dark:text-brand-light">
       <i data-lucide="map" class="w-5 h-5"></i>
       <span class="text-[10px] font-bold">Mapa</span>
     </button>
-    <button onclick="alert('My Dead Drops slouží k anonymnímu objevování úschov.')" class="flex flex-col items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300 transition">
+    <button onclick="alert('Zadejte 6místný PIN kód od Vendora pro zobrazení úschovy.')" class="flex flex-col items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300 transition">
       <i data-lucide="help-circle" class="w-5 h-5"></i>
       <span class="text-[10px] font-bold">Jak to funguje</span>
     </button>
@@ -223,12 +206,14 @@
   <script>
     lucide.createIcons();
 
-    // Dark Mode Toggle
+    let targetDropPos = null;
+    let miniMap = null;
+    let userHeading = 0;
+
     function toggleTheme() {
       document.documentElement.classList.toggle('dark');
     }
 
-    // Obrazovkový přepínač
     function showScreen(screenId) {
       ['screen-pin', 'screen-detail', 'screen-compass'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
@@ -236,9 +221,10 @@
       document.getElementById(screenId).classList.remove('hidden');
 
       if (screenId === 'screen-detail') initMiniMap();
+      if (screenId === 'screen-compass') startCompass();
     }
 
-    // Auto-focus na PIN polech
+    // Auto-focus na PIN vstupních políčkách
     const boxes = document.querySelectorAll('.pin-box');
     boxes.forEach((box, idx) => {
       box.addEventListener('input', (e) => {
@@ -249,29 +235,157 @@
       });
     });
 
-    function submitPin() {
+    // KRYPTOGRAFIE E2EE
+    async function hashPin(pin) {
+      const msgUint8 = new TextEncoder().encode(pin.toUpperCase());
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function base64ToBuffer(b64) {
+      const bin = window.atob(b64); const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes.buffer;
+    }
+
+    async function deriveKey(pin, salt) {
+      const enc = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pin.toUpperCase()), 'PBKDF2', false, ['deriveKey']);
+      return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 30000, hash: 'SHA-256' }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    }
+
+    async function decryptData(encryptedObj, pin) {
+      try {
+        const salt = new Uint8Array(base64ToBuffer(encryptedObj.salt));
+        const iv = new Uint8Array(base64ToBuffer(encryptedObj.iv));
+        const cipherBuffer = base64ToBuffer(encryptedObj.cipherText);
+        const key = await deriveKey(pin, salt);
+        const decBuffer = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipherBuffer);
+        return JSON.parse(new TextDecoder().decode(decBuffer));
+      } catch (e) { return null; }
+    }
+
+    async function revealDrop() {
       let pin = '';
       boxes.forEach(b => pin += b.value);
-      if (pin.length < 6) {
-        alert('Zadejte kompletní 6místný PIN kód.');
+      pin = pin.toUpperCase();
+      const errEl = document.getElementById('pin-error');
+      errEl.classList.add('hidden');
+
+      if (pin.length !== 6) {
+        errEl.innerText = 'Zadejte kompletní 6místný PIN kód.';
+        errEl.classList.remove('hidden');
         return;
       }
+
+      const pinH = await hashPin(pin);
+      const raw = localStorage.getItem(`drop_${pinH}`);
+
+      if (!raw) {
+        errEl.innerText = 'Neplatný nebo nenalezený PIN kód.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const dropRecord = JSON.parse(raw);
+      const decryptedData = await decryptData(dropRecord.encrypted, pin);
+
+      if (!decryptedData) {
+        errEl.innerText = 'Chyba dešifrování.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      targetDropPos = { lat: dropRecord.lat, lng: dropRecord.lng };
+
+      if (dropRecord.burn) {
+        localStorage.removeItem(`drop_${pinH}`);
+        document.getElementById('burn-warning').classList.remove('hidden');
+      }
+
+      document.getElementById('res-desc').innerText = decryptedData.desc || 'Bez popisu.';
+      document.getElementById('ext-map-link').href = `https://www.google.com/maps/dir/?api=1&destination=${dropRecord.lat},${dropRecord.lng}`;
+
+      const photosDiv = document.getElementById('res-photos');
+      photosDiv.innerHTML = '';
+      if (decryptedData.photos && decryptedData.photos.length > 0) {
+        document.getElementById('res-photos-container').classList.remove('hidden');
+        decryptedData.photos.forEach(src => {
+          const img = document.createElement('img');
+          img.src = src;
+          img.className = 'w-full h-20 object-cover rounded-2xl border border-slate-200 dark:border-slate-800';
+          photosDiv.appendChild(img);
+        });
+      }
+
       showScreen('screen-detail');
     }
 
-    let miniMap = null;
     function initMiniMap() {
-      if (miniMap) return;
+      if (!targetDropPos) return;
+      if (miniMap) {
+        miniMap.setView([targetDropPos.lat, targetDropPos.lng], 15);
+        return;
+      }
       setTimeout(() => {
-        miniMap = L.map('mini-map', { zoomControl: false }).setView([50.0755, 14.4378], 15);
+        miniMap = L.map('mini-map', { zoomControl: false }).setView([targetDropPos.lat, targetDropPos.lng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(miniMap);
-        L.marker([50.0755, 14.4378]).addTo(miniMap);
+        L.marker([targetDropPos.lat, targetDropPos.lng]).addTo(miniMap);
       }, 100);
+    }
+
+    // AR KOMPAS LOGIKA
+    function startCompass() {
+      if (!targetDropPos) return;
+
+      window.addEventListener('deviceorientation', function(event) {
+        if (event.webkitCompassHeading) userHeading = event.webkitCompassHeading;
+        else if (event.alpha) userHeading = 360 - event.alpha;
+      }, true);
+
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(pos => {
+          const userLat = pos.coords.latitude;
+          const userLng = pos.coords.longitude;
+
+          const dist = getHaversineDistance(userLat, userLng, targetDropPos.lat, targetDropPos.lng);
+          const distStr = dist >= 1000 ? `${(dist / 1000).toFixed(2)} km` : `${Math.round(dist)} m`;
+
+          document.getElementById('dist-label').innerText = distStr;
+          document.getElementById('compass-dist-top').innerText = distStr;
+          document.getElementById('compass-dist-bottom').innerText = distStr;
+
+          const bearing = getBearing(userLat, userLng, targetDropPos.lat, targetDropPos.lng);
+          const arrowAngle = (bearing - userHeading + 360) % 360;
+          
+          document.getElementById('compass-arrow-container').style.transform = `rotate(${arrowAngle}deg)`;
+          document.getElementById('compass-dir-bottom').innerText = getDirectionName(bearing);
+        }, err => {}, { enableHighAccuracy: true });
+      }
+    }
+
+    function getHaversineDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function getBearing(lat1, lon1, lat2, lon2) {
+      const y = Math.sin((lon2 - lon1) * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180);
+      const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) - Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos((lon2 - lon1) * Math.PI / 180);
+      return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+    }
+
+    function getDirectionName(bearing) {
+      const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+      return dirs[Math.round(bearing / 45) % 8];
     }
 
     function shareLocation() {
       navigator.clipboard.writeText(window.location.href);
-      alert('Odkaz na lokaci byl zkopírován!');
+      alert('Odkaz zkopírován!');
     }
   </script>
 </body>
