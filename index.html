@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>My Dead Drops</title>
+  <title>My Dead Drops — Zákaznický Portál</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0a0a0a">
   
+  <!-- CDN Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -15,14 +16,9 @@
 
   <style>
     body { background-color: #0a0a0a; color: #f5f5f5; user-select: none; }
-    #map, #map-customer { height: 260px; width: 100%; border-radius: 12px; }
+    #map-customer { height: 260px; width: 100%; border-radius: 12px; }
     .leaflet-container { background: #171717 !important; }
-    
-    /* Plynulá rotace šipky kompasu */
-    #compass-arrow-container {
-      transition: transform 0.15s ease-out;
-    }
-
+    #compass-arrow-container { transition: transform 0.15s ease-out; }
     @keyframes slideDown {
       from { transform: translateY(-100%); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
@@ -32,136 +28,61 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between p-4 font-sans antialiased relative">
 
-  <!-- IN-APP TOAST CONTAINER -->
   <div id="toast-container" class="fixed top-4 left-4 right-4 z-[3000] max-w-md mx-auto pointer-events-none space-y-2"></div>
 
-  <!-- HEADER -->
   <header class="flex items-center justify-between border-b border-neutral-800 pb-3">
-    <div class="flex items-center gap-2 text-emerald-400 font-bold tracking-wider cursor-pointer" onclick="switchRole(null)">
+    <a href="index.html" class="flex items-center gap-2 text-emerald-400 font-bold tracking-wider">
       <i data-lucide="shield-lock" class="w-6 h-6"></i>
       <span>MY DEAD DROPS</span>
-    </div>
+    </a>
     <div class="flex items-center gap-2">
-      <a href="requests-vendor.html" class="text-xs bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 px-2.5 py-1.5 rounded-lg flex items-center gap-1" title="Požadavky">
-        <i data-lucide="inbox" class="w-3.5 h-3.5 text-emerald-400"></i> Požadavky
+      <a href="vendor.html" class="text-xs bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-400 px-2.5 py-1.5 rounded-lg flex items-center gap-1">
+        <i data-lucide="lock" class="w-3.5 h-3.5 text-neutral-500"></i> Vendor Vstup
       </a>
-      <button onclick="toggleAdminModal(true)" class="text-xs bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 px-2 py-1.5 rounded-lg flex items-center gap-1">
-        <i data-lucide="settings" class="w-3.5 h-3.5 text-neutral-400"></i>
-      </button>
-      <button id="reset-btn" onclick="switchRole(null)" class="hidden text-xs bg-neutral-800 text-neutral-300 px-3 py-1.5 rounded-lg flex items-center gap-1">
-        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Zpět
-      </button>
     </div>
   </header>
 
-  <!-- MAIN CONTAINER -->
   <main class="my-auto w-full max-w-md mx-auto py-4">
     
-    <!-- ROLE SELECTION -->
-    <div id="view-roles" class="space-y-4">
+    <!-- VIEW 1: Customer Portal Options & PIN Entry -->
+    <div id="view-customer-entry" class="space-y-4">
       <div class="text-center space-y-1">
         <p class="text-xs font-semibold tracking-widest text-emerald-500 uppercase flex items-center justify-center gap-1">
-          <i data-lucide="lock" class="w-3.5 h-3.5"></i> End-to-End Encrypted System
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> End-to-End Encrypted Customer Portal
         </p>
-        <p class="text-xs text-neutral-500">Vyberte požadovaný režim</p>
-      </div>
-      
-      <button onclick="switchRole('vendor')" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-neutral-950 font-bold rounded-xl shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 active:scale-95 transition">
-        <i data-lucide="map-pin" class="w-5 h-5"></i> Vytvořit Dead Drop (Vendor)
-      </button>
-
-      <button onclick="switchRole('customer')" class="w-full py-4 bg-neutral-900 border border-neutral-800 hover:border-neutral-700 font-bold rounded-xl flex items-center justify-center gap-2 active:scale-95 transition">
-        <i data-lucide="key-round" class="w-5 h-5 text-emerald-400"></i> Otevřít podle PINu (Zákazník)
-      </button>
-
-      <div class="pt-2">
-        <a href="request.html" class="w-full py-3 bg-neutral-950 border border-neutral-800 hover:border-emerald-500/50 text-neutral-300 font-semibold rounded-xl flex items-center justify-center gap-2 transition text-xs">
-          <i data-lucide="shopping-bag" class="w-4 h-4 text-emerald-400"></i> Požádat / Objednat nový drop
-        </a>
-      </div>
-    </div>
-
-    <!-- VENDOR FLOW -->
-    <div id="view-vendor" class="hidden space-y-4">
-      <div class="relative">
-        <div id="map"></div>
-        <button type="button" onclick="locateVendorGPS()" class="absolute bottom-3 right-3 z-[1000] bg-neutral-950/90 border border-neutral-700 hover:border-emerald-500 text-emerald-400 p-2.5 rounded-xl shadow-lg backdrop-blur flex items-center gap-1.5 text-xs font-bold">
-          <i data-lucide="crosshair" class="w-4 h-4"></i> Moje GPS
-        </button>
+        <p class="text-xs text-neutral-500">Otevřete úschovu nebo požádejte o novou</p>
       </div>
 
-      <div class="space-y-1">
-        <label class="text-xs text-neutral-400 flex justify-between">
-          <span>Popis úschovy (E2EE Zašifrováno)</span>
-          <span id="char-count">0/500</span>
-        </label>
-        <textarea id="desc-input" maxlength="500" oninput="updateCharCount()" placeholder="Návod k nalezení..." class="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm focus:border-emerald-500 focus:outline-none h-20 resize-none"></textarea>
-      </div>
-
-      <div>
-        <label class="text-xs text-neutral-400 mb-1 block">Fotografie</label>
-        <label class="flex items-center justify-center gap-2 w-full p-3 bg-neutral-900 border border-dashed border-neutral-700 rounded-lg cursor-pointer text-xs text-neutral-300">
-          <i data-lucide="camera" class="w-4 h-4 text-emerald-400"></i>
-          <span id="file-label">Vybrat fotky</span>
-          <input type="file" id="photo-input" multiple accept="image/*" onchange="handlePhotos(this)" class="hidden">
-        </label>
-        <div id="photo-previews" class="flex gap-2 mt-2"></div>
-      </div>
-
-      <div class="flex items-center gap-2 bg-neutral-900 p-3 rounded-lg border border-neutral-800">
-        <input type="checkbox" id="burn-input" class="accent-emerald-500 w-4 h-4">
-        <label for="burn-input" class="text-xs text-neutral-300 flex items-center gap-1 cursor-pointer">
-          <i data-lucide="flame" class="w-3.5 h-3.5 text-amber-500"></i> Zničit po 1. zobrazení (Burn-after-read)
-        </label>
-      </div>
-
-      <div class="space-y-1.5">
-        <button id="vendor-submit-btn" onclick="createDrop()" class="w-full py-3.5 bg-emerald-600 text-neutral-950 font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-2">
-          <i data-lucide="lock" class="w-4 h-4"></i> Zašifrovat a Vygenerovat PIN
-        </button>
-        <p id="vendor-status" class="text-[11px] text-center text-emerald-400 font-mono min-h-[16px]"></p>
-      </div>
-    </div>
-
-    <!-- VENDOR SUCCESS -->
-    <div id="view-vendor-success" class="hidden space-y-4 text-center">
-      <div class="bg-neutral-900 p-6 rounded-2xl border border-neutral-800 space-y-3">
-        <i data-lucide="shield-check" class="w-10 h-10 text-emerald-400 mx-auto"></i>
-        <h3 class="text-lg font-bold text-neutral-200">Dead Drop vytvořen!</h3>
-        <p class="text-xs text-neutral-400">Předejte tento PIN kód zákazníkovi.</p>
-
-        <div id="result-pin" class="text-3xl font-mono font-extrabold tracking-widest text-emerald-400 bg-neutral-950 py-3 rounded-lg border border-emerald-500/30">
-          ------
-        </div>
-
-        <button onclick="copyPin()" class="w-full py-3 bg-emerald-600 text-neutral-950 font-bold rounded-lg flex items-center justify-center gap-2">
-          <i data-lucide="copy" class="w-4 h-4"></i> Zkopírovat PIN
-        </button>
-      </div>
-    </div>
-
-    <!-- CUSTOMER FLOW -->
-    <div id="view-customer" class="hidden space-y-4">
-      <div class="bg-neutral-900 p-6 rounded-2xl border border-neutral-800 space-y-4">
-        <h3 class="text-center font-bold text-xs tracking-wider uppercase text-neutral-400">Zadejte PIN pro dešifrování</h3>
-        <input type="text" id="pin-input" maxlength="6" placeholder="A8X29K" class="w-full text-center text-3xl font-mono tracking-widest uppercase bg-neutral-950 border border-neutral-700 rounded-xl p-3 text-emerald-400 focus:outline-none">
+      <!-- PIN Form Card -->
+      <div class="bg-neutral-900 p-6 rounded-2xl border border-neutral-800 space-y-4 shadow-xl">
+        <h3 class="text-center font-bold text-xs tracking-wider uppercase text-neutral-300 flex items-center justify-center gap-1.5">
+          <i data-lucide="key-round" class="w-4 h-4 text-emerald-400"></i> Zadejte 6místný PIN kód
+        </h3>
+        <input type="text" id="pin-input" maxlength="6" placeholder="A8X29K" class="w-full text-center text-3xl font-mono tracking-widest uppercase bg-neutral-950 border border-neutral-700 rounded-xl p-3 text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
         <p id="pin-error" class="text-xs text-red-500 text-center hidden"></p>
         
         <div class="space-y-1.5">
-          <button id="customer-submit-btn" onclick="revealDrop()" class="w-full py-3.5 bg-emerald-600 text-neutral-950 font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-2">
+          <button id="customer-submit-btn" onclick="revealDrop()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-neutral-950 font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-2">
             <i data-lucide="unlock" class="w-4 h-4"></i> Dešifrovat a Otevřít
           </button>
           <p id="customer-status" class="text-[11px] text-center text-emerald-400 font-mono min-h-[16px]"></p>
         </div>
       </div>
+
+      <!-- Request Order Redirect Button -->
+      <div class="pt-2">
+        <a href="request.html" class="w-full py-3.5 bg-neutral-950 border border-neutral-800 hover:border-emerald-500/50 text-neutral-300 font-semibold rounded-xl flex items-center justify-center gap-2 transition text-xs shadow-md">
+          <i data-lucide="shopping-bag" class="w-4 h-4 text-emerald-400"></i> Požádat / Objednat nový Drop
+        </a>
+      </div>
     </div>
 
-    <!-- CUSTOMER RESULT (MAPA / AR KOMPAS) -->
     <div id="view-customer-result" class="hidden space-y-4">
       <div id="burn-warning" class="hidden bg-amber-950/40 border border-amber-800/60 text-amber-400 p-2.5 rounded-lg text-xs text-center flex items-center justify-center gap-1.5">
-        <i data-lucide="flame" class="w-4 h-4"></i> Úschova byla po otevření smazána.
+        <i data-lucide="flame" class="w-4 h-4"></i> Úschova byla po otevření zničena (Burn-after-read).
       </div>
 
+      <!-- Map vs Compass Navigation Switch -->
       <div class="flex bg-neutral-900 p-1 rounded-xl border border-neutral-800">
         <button id="tab-map-btn" onclick="switchNavTab('map')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-neutral-950 transition">
           Mapa
@@ -171,11 +92,12 @@
         </button>
       </div>
 
+      <!-- Map View Container -->
       <div id="nav-map-view">
         <div id="map-customer"></div>
       </div>
 
-      <!-- AR KOMPAS STRUKTURA -->
+      <!-- AR Compass View Container -->
       <div id="nav-compass-view" class="hidden bg-neutral-900 border border-neutral-800 rounded-2xl p-6 text-center space-y-4">
         <p class="text-[11px] uppercase tracking-widest text-neutral-400 font-semibold">Živá navigace azimutem</p>
         
@@ -188,7 +110,7 @@
 
         <div class="space-y-1">
           <div id="compass-distance" class="text-3xl font-mono font-extrabold text-emerald-400">--- m</div>
-          <p id="compass-status" class="text-xs text-neutral-400">Načítám GPS a gyroskop...</p>
+          <p id="compass-status" class="text-xs text-neutral-400">Povolte GPS a gyroskop pro navádění</p>
         </div>
 
         <button onclick="requestCompassPermission()" class="text-[10px] text-neutral-500 underline">Kalibrovat kompas (iOS/Android)</button>
@@ -198,61 +120,36 @@
         <i data-lucide="external-link" class="w-4 h-4 text-emerald-400"></i> Otevřít v Google Maps
       </a>
 
-      <div class="bg-neutral-900 p-3 rounded-lg border border-neutral-800">
-        <p class="text-[10px] text-neutral-500 uppercase tracking-wider font-semibold">Dešifrovaný popis</p>
-        <p id="res-desc" class="text-sm text-neutral-200 mt-0.5">Bez popisu</p>
+      <div class="bg-neutral-900 p-3.5 rounded-xl border border-neutral-800">
+        <p class="text-[10px] text-neutral-500 uppercase tracking-wider font-semibold">Dešifrovaný popis úschovy</p>
+        <p id="res-desc" class="text-sm text-neutral-200 mt-1 whitespace-pre-line">Bez popisu</p>
       </div>
 
       <div id="res-photos-container" class="space-y-1 hidden">
-        <p class="text-[10px] text-neutral-500 uppercase tracking-wider font-semibold">Fotografie</p>
+        <p class="text-[10px] text-neutral-500 uppercase tracking-wider font-semibold">Fotografie úschovy</p>
         <div id="res-photos" class="grid grid-cols-3 gap-2"></div>
       </div>
+
+      <button onclick="window.location.reload()" class="w-full py-3 bg-neutral-950 border border-neutral-800 hover:bg-neutral-900 text-neutral-300 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Zpět na zadání PINu
+      </button>
     </div>
 
   </main>
 
-  <!-- MODAL ADMIN -->
-  <div id="admin-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[2000] hidden flex items-center justify-center p-4">
-    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 max-w-md w-full max-h-[80vh] flex flex-col justify-between space-y-4">
-      <div class="flex items-center justify-between border-b border-neutral-800 pb-2">
-        <h3 class="font-bold text-sm text-emerald-400 flex items-center gap-1.5">
-          <i data-lucide="settings" class="w-4 h-4"></i> Správa aplikace (Admin)
-        </h3>
-        <button onclick="toggleAdminModal(false)" class="text-neutral-400 hover:text-white">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-      
-      <div class="overflow-y-auto space-y-3 text-xs text-neutral-300 pr-1">
-        <p class="text-neutral-400">Přehled aktivních uložených úschov v tomto zařízení:</p>
-        <div id="admin-items-list" class="space-y-2"></div>
-      </div>
-
-      <button onclick="clearAllData()" class="w-full py-2 bg-red-950 hover:bg-red-900 border border-red-800 text-red-300 font-bold rounded-lg text-xs">
-        Vymazat všechna lokální data
-      </button>
-    </div>
-  </div>
-
-  <footer class="text-center text-[10px] text-neutral-600 pt-4 flex flex-col items-center gap-1">
-    <div>AES-GCM E2EE • Standalone PWA Engine</div>
+  <footer class="text-center text-[10px] text-neutral-600 pt-4">
+    AES-GCM E2EE • Standalone PWA Engine • Anonymní Zákaznické Rozhraní
   </footer>
 
   <script>
     lucide.createIcons();
 
-    let vendorMap = null, customerMap = null;
-    let selectedMarker = null;
-    let currentPos = { lat: 50.0755, lng: 14.4378 };
+    let customerMap = null;
     let targetDropPos = null;
-    let photoFiles = [];
-    
     let compassWatchId = null;
     let userHeading = 0;
 
-    // ==========================================
-    // NOTIFIKAČNÍ SYSTEM (TOAST)
-    // ==========================================
+    // --- Toast Notifications ---
     function notify({ title, message, type = 'info' }) {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
@@ -290,23 +187,16 @@
       }, 3500);
     }
 
-    // ==========================================
-    // KRYPTOGRAFIE (AES-GCM Web Crypto API)
-    // ==========================================
+    // --- Web Crypto API Helpers ---
     async function hashPin(pin) {
       const msgUint8 = new TextEncoder().encode(pin.toUpperCase());
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
       return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    function bufferToBase64(b) {
-      let bin = ''; const bytes = new Uint8Array(b);
-      for (let i = 0; i < bytes.byteLength; i++) bin += String.fromCharCode(bytes[i]);
-      return window.btoa(bin);
-    }
-
     function base64ToBuffer(b64) {
-      const bin = window.atob(b64); const bytes = new Uint8Array(bin.length);
+      const bin = window.atob(b64); 
+      const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       return bytes.buffer;
     }
@@ -315,14 +205,6 @@
       const enc = new TextEncoder();
       const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pin.toUpperCase()), 'PBKDF2', false, ['deriveKey']);
       return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 30000, hash: 'SHA-256' }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
-    }
-
-    async function encryptData(dataObj, pin) {
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const key = await deriveKey(pin, salt);
-      const encBuffer = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(dataObj)));
-      return { cipherText: bufferToBase64(encBuffer), salt: bufferToBase64(salt.buffer), iv: bufferToBase64(iv.buffer) };
     }
 
     async function decryptData(encryptedObj, pin) {
@@ -336,150 +218,7 @@
       } catch (e) { return null; }
     }
 
-    // ==========================================
-    // VENDOR LOGIKA + POHYBLIVÁ MAPA + GPS
-    // ==========================================
-    function generatePin() {
-      const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-      let pin = '';
-      for (let i = 0; i < 6; i++) pin += chars.charAt(Math.floor(Math.random() * chars.length));
-      return pin;
-    }
-
-    function initVendorMap() {
-      if (vendorMap) return;
-      setTimeout(() => {
-        vendorMap = L.map('map').setView([currentPos.lat, currentPos.lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(vendorMap);
-        
-        // POHYBLIVÝ ŠPENDLÍK
-        selectedMarker = L.marker([currentPos.lat, currentPos.lng], { draggable: true }).addTo(vendorMap);
-        
-        selectedMarker.on('dragend', function(e) {
-          const latlng = e.target.getLatLng();
-          currentPos = { lat: latlng.lat, lng: latlng.lng };
-          notify({ title: 'Poloha upravena', message: 'Špendlík byl posunut na novou pozici.', type: 'info' });
-        });
-
-        vendorMap.on('click', function(e) {
-          currentPos = { lat: e.latlng.lat, lng: e.latlng.lng };
-          selectedMarker.setLatLng(e.latlng);
-          notify({ title: 'Poloha nastavena', message: 'Špendlík přemístěn na kliknuté místo.', type: 'info' });
-        });
-      }, 200);
-    }
-
-    function locateVendorGPS() {
-      if (navigator.geolocation) {
-        notify({ title: 'Vyhledávám GPS...', message: 'Zjišťuji vaši přesnou polohu.', type: 'info' });
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            currentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            if (vendorMap && selectedMarker) {
-              vendorMap.setView([currentPos.lat, currentPos.lng], 17);
-              selectedMarker.setLatLng([currentPos.lat, currentPos.lng]);
-            }
-            notify({ title: 'GPS Zaměřeno!', message: 'Poloha na mapě aktualizována.', type: 'success' });
-          },
-          (err) => {
-            notify({ title: 'Chyba GPS', message: 'Nepodařilo se získat přesnou polohu.', type: 'error' });
-          },
-          { enableHighAccuracy: true }
-        );
-      }
-    }
-
-    function handlePhotos(input) {
-      photoFiles = Array.from(input.files).slice(0, 3);
-      const previewContainer = document.getElementById('photo-previews');
-      previewContainer.innerHTML = '';
-      photoFiles.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          const thumb = document.createElement('img');
-          thumb.src = e.target.result;
-          thumb.className = 'w-16 h-16 object-cover rounded-lg border border-neutral-700';
-          previewContainer.appendChild(thumb);
-        };
-        reader.readAsDataURL(file);
-      });
-      document.getElementById('file-label').innerText = `Vybráno ${photoFiles.length} fotek`;
-      notify({ title: 'Fotografie načteny', message: `Připraveno ${photoFiles.length} fotek.`, type: 'info' });
-    }
-
-    function processImage(file) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const maxDim = 800; let w = img.width, h = img.height;
-            if (w > h && w > maxDim) { h *= maxDim / w; w = maxDim; }
-            else if (h > maxDim) { w *= maxDim / h; h = maxDim; }
-            canvas.width = w; canvas.height = h;
-            ctx.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', 0.6));
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    async function createDrop() {
-      const btn = document.getElementById('vendor-submit-btn');
-      const status = document.getElementById('vendor-status');
-      btn.disabled = true;
-
-      try {
-        const cleanPhotos = [];
-        for (let i = 0; i < photoFiles.length; i++) {
-          status.innerText = `Anonymizuji fotku ${i + 1}/${photoFiles.length}...`;
-          cleanPhotos.push(await processImage(photoFiles[i]));
-        }
-
-        const pin = generatePin();
-        const pinH = await hashPin(pin);
-
-        status.innerText = "Šifruji data...";
-        const encryptedPackage = await encryptData({
-          desc: document.getElementById('desc-input').value,
-          photos: cleanPhotos
-        }, pin);
-
-        status.innerText = "Ukládám...";
-        const dropRecord = {
-          pin: pin,
-          lat: currentPos.lat,
-          lng: currentPos.lng,
-          encrypted: encryptedPackage,
-          burn: document.getElementById('burn-input').checked,
-          created: Date.now()
-        };
-
-        localStorage.setItem(`drop_${pinH}`, JSON.stringify(dropRecord));
-
-        status.innerText = "";
-        document.getElementById('view-vendor').classList.add('hidden');
-        document.getElementById('view-vendor-success').classList.remove('hidden');
-        document.getElementById('result-pin').innerText = pin;
-
-        notify({ title: 'Dead Drop Vytvořen!', message: `PIN ${pin} byl vygenerován.`, type: 'success' });
-
-      } catch (err) {
-        console.error(err);
-        status.innerText = "Chyba při vytváření.";
-        notify({ title: 'Chyba', message: 'Nepodařilo se vytvořit drop.', type: 'error' });
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    // ==========================================
-    // CUSTOMER LOGIKA & DEŠIFROVÁNÍ
-    // ==========================================
+    // --- Drop Reveal Logic ---
     async function revealDrop() {
       const pin = document.getElementById('pin-input').value.trim().toUpperCase();
       const errEl = document.getElementById('pin-error');
@@ -489,51 +228,53 @@
       errEl.classList.add('hidden');
 
       if (pin.length !== 6) {
-        errEl.innerText = 'PIN kód musí mít 6 znaků.';
+        errEl.innerText = 'PIN kód musí mít přesně 6 znaků.';
         errEl.classList.remove('hidden');
+        notify({ title: 'Neplatný zadání', message: 'PIN musí mít 6 znaků.', type: 'error' });
         return;
       }
 
       btn.disabled = true;
-      status.innerText = "Vyhledávám...";
+      status.innerText = "Vyhledávám v databázi...";
 
       try {
         const pinH = await hashPin(pin);
         const raw = localStorage.getItem(`drop_${pinH}`);
 
         if (!raw) {
-          errEl.innerText = 'Neplatný nebo nenalezený PIN kód.';
+          errEl.innerText = 'Neplatný, vypršený nebo již zničený PIN kód.';
           errEl.classList.remove('hidden');
           status.innerText = "";
-          notify({ title: 'Nenalezeno', message: 'PIN kód neexistuje.', type: 'error' });
+          notify({ title: 'Nenalezeno', message: 'Kombinace PIN kódu neexistuje.', type: 'error' });
           return;
         }
 
         const dropRecord = JSON.parse(raw);
-        status.innerText = "Dešifruji...";
+        status.innerText = "Dešifruji data klíčem...";
         
         const decryptedData = await decryptData(dropRecord.encrypted, pin);
 
         if (!decryptedData) {
-          errEl.innerText = 'Chyba dešifrování.';
+          errEl.innerText = 'Chyba dešifrování. Špatný PIN kód.';
           errEl.classList.remove('hidden');
           status.innerText = "";
-          notify({ title: 'Chyba PINu', message: 'Špatný PIN kód.', type: 'error' });
+          notify({ title: 'Chyba PINu', message: 'Dekódování selhalo.', type: 'error' });
           return;
         }
 
         targetDropPos = { lat: dropRecord.lat, lng: dropRecord.lng };
 
+        // Handle Burn-after-read logic
         if (dropRecord.burn) {
           localStorage.removeItem(`drop_${pinH}`);
           document.getElementById('burn-warning').classList.remove('hidden');
-          notify({ title: 'Úschova smazána', message: 'Data byla po přečtení zničena.', type: 'warning' });
+          notify({ title: 'Úschova zničena', message: 'Tato data byla po otevření trvale smazána.', type: 'warning' });
         } else {
-          notify({ title: 'Dešifrováno!', message: 'Lokace načtena.', type: 'success' });
+          notify({ title: 'Dešifrováno!', message: 'Úschova byla úspěšně načtena.', type: 'success' });
         }
 
         status.innerText = "";
-        document.getElementById('view-customer').classList.add('hidden');
+        document.getElementById('view-customer-entry').classList.add('hidden');
         document.getElementById('view-customer-result').classList.remove('hidden');
 
         document.getElementById('res-desc').innerText = decryptedData.desc || 'Bez popisu';
@@ -559,7 +300,7 @@
 
       } catch (err) {
         console.error(err);
-        errEl.innerText = 'Chyba při zpracování.';
+        errEl.innerText = 'Chyba při dekódování.';
         errEl.classList.remove('hidden');
         status.innerText = "";
       } finally {
@@ -567,9 +308,7 @@
       }
     }
 
-    // ==========================================
-    // PLNOU FUNKČNÍ AR KOMPAS (GYRO + GPS AZIMUT)
-    // ==========================================
+    // --- AR Compass Logic ---
     function switchNavTab(tab) {
       document.getElementById('tab-map-btn').className = tab === 'map' ? "flex-1 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-neutral-950 transition" : "flex-1 py-2 text-xs font-bold rounded-lg text-neutral-400 hover:text-white transition";
       document.getElementById('tab-compass-btn').className = tab === 'compass' ? "flex-1 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-neutral-950 transition" : "flex-1 py-2 text-xs font-bold rounded-lg text-neutral-400 hover:text-white transition";
@@ -593,16 +332,14 @@
 
       notify({ title: 'AR Kompas Aktivní', message: 'Otáčejte telefonem směrem k cíli.', type: 'info' });
 
-      // 1. Posluchač natočení telefonu (Gyroskop)
       window.addEventListener('deviceorientation', function(event) {
         if (event.webkitCompassHeading) {
-          userHeading = event.webkitCompassHeading; // iOS Safari
+          userHeading = event.webkitCompassHeading;
         } else if (event.alpha) {
-          userHeading = 360 - event.alpha; // Android Chrome
+          userHeading = 360 - event.alpha;
         }
       }, true);
 
-      // 2. Posluchač GPS polohy a výpočet úhlu
       if (navigator.geolocation) {
         compassWatchId = navigator.geolocation.watchPosition(pos => {
           const userLat = pos.coords.latitude;
@@ -611,14 +348,11 @@
           const dist = getHaversineDistance(userLat, userLng, targetDropPos.lat, targetDropPos.lng);
           document.getElementById('compass-distance').innerText = dist >= 1000 ? `${(dist / 1000).toFixed(2)} km` : `${Math.round(dist)} m`;
 
-          // Výpočet azimutu směrem k úschově (0 - 360 stupňů)
           const bearing = getBearing(userLat, userLng, targetDropPos.lat, targetDropPos.lng);
-          
-          // Úhel rotace šipky kompasu
           const arrowAngle = (bearing - userHeading + 360) % 360;
           document.getElementById('compass-arrow-container').style.transform = `rotate(${arrowAngle}deg)`;
           
-          document.getElementById('compass-status').innerText = dist < 8 ? "Jste přímo na místě úschovy!" : "Míříte k cíli";
+          document.getElementById('compass-status').innerText = dist < 8 ? "Jste přímo na místě úschovy!" : "Míříte směrem k cíli";
         }, err => {}, { enableHighAccuracy: true });
       }
     }
@@ -635,59 +369,6 @@
       const y = Math.sin((lon2 - lon1) * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180);
       const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) - Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos((lon2 - lon1) * Math.PI / 180);
       return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-    }
-
-    // ==========================================
-    // POMOCNÉ UI FUNKCE
-    // ==========================================
-    function switchRole(role) {
-      document.getElementById('reset-btn').classList.toggle('hidden', !role);
-      ['roles', 'vendor', 'vendor-success', 'customer', 'customer-result'].forEach(id => {
-        document.getElementById(`view-${id}`).classList.add('hidden');
-      });
-      if (!role) document.getElementById('view-roles').classList.remove('hidden');
-      else if (role === 'vendor') { document.getElementById('view-vendor').classList.remove('hidden'); initVendorMap(); }
-      else if (role === 'customer') document.getElementById('view-customer').classList.remove('hidden');
-    }
-
-    function copyPin() {
-      navigator.clipboard.writeText(document.getElementById('result-pin').innerText);
-      notify({ title: 'Zkopírováno', message: 'PIN kód vkládán do schránky.', type: 'info' });
-    }
-
-    function updateCharCount() {
-      document.getElementById('char-count').innerText = `${document.getElementById('desc-input').value.length}/500`;
-    }
-
-    function toggleAdminModal(show) {
-      document.getElementById('admin-modal').classList.toggle('hidden', !show);
-      if (show) renderAdminItems();
-    }
-
-    function renderAdminItems() {
-      const list = document.getElementById('admin-items-list');
-      list.innerHTML = '';
-      let count = 0;
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('drop_')) {
-          count++;
-          const data = JSON.parse(localStorage.getItem(key));
-          const item = document.createElement('div');
-          item.className = 'p-2 bg-neutral-950 rounded border border-neutral-800 flex justify-between items-center';
-          item.innerHTML = `<div><span class="font-bold text-emerald-400">PIN: ${data.pin || 'Aktivní'}</span></div>`;
-          list.appendChild(item);
-        }
-      }
-      if (count === 0) list.innerHTML = '<p class="text-neutral-500 text-center py-2">Žádné uložené drops.</p>';
-    }
-
-    function clearAllData() {
-      if (confirm('Vymazat všechna data?')) {
-        localStorage.clear();
-        renderAdminItems();
-        notify({ title: 'Data vymazána', message: 'Úložiště vyčištěno.', type: 'warning' });
-      }
     }
   </script>
 </body>
