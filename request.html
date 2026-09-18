@@ -12,6 +12,7 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between p-4 font-sans antialiased">
 
+  <!-- Header -->
   <header class="flex items-center justify-between border-b border-neutral-800 pb-3">
     <a href="index.html" class="flex items-center gap-2 text-emerald-400 font-bold tracking-wider">
       <i data-lucide="shield-lock" class="w-6 h-6"></i>
@@ -23,13 +24,13 @@
   </header>
 
   <main class="my-auto w-full max-w-md mx-auto py-6">
-    <div id="request-form-card" class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-5">
+    <div id="request-form-card" class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-5 shadow-xl">
       
       <div class="space-y-1 text-center">
         <h2 class="text-lg font-bold text-neutral-100 flex items-center justify-center gap-2">
           <i data-lucide="shopping-bag" class="w-5 h-5 text-emerald-400"></i> Požadavek na nový Drop
         </h2>
-        <p class="text-xs text-neutral-400">Zadejte požadovanou hodnotu a popřípadě kupon.</p>
+        <p class="text-xs text-neutral-400">Zadejte požadovanou hodnotu a kupon.</p>
       </div>
 
       <form onsubmit="submitRequest(event)" class="space-y-4">
@@ -57,17 +58,17 @@
       </form>
     </div>
 
-    <div id="success-card" class="hidden bg-neutral-900 border border-neutral-800 rounded-2xl p-6 text-center space-y-4">
+    <div id="success-card" class="hidden bg-neutral-900 border border-neutral-800 rounded-2xl p-6 text-center space-y-4 shadow-xl">
       <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto"></i>
       <h3 class="text-lg font-bold text-neutral-100">Požadavek přijat!</h3>
-      <p class="text-xs text-neutral-400">Váš požadavek byl úspěšně zaznamenán.</p>
+      <p class="text-xs text-neutral-400">Váš požadavek byl úspěšně zaznamenán pro Vendora.</p>
       
       <div class="bg-neutral-950 p-3 rounded-xl border border-neutral-800 text-xs font-mono text-emerald-400">
         ID Požadavku: <span id="req-id">------</span>
       </div>
 
       <a href="index.html" class="block w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold rounded-xl text-xs">
-        Zpět na hlavní stránku
+        Zpět na Zákaznický Portál
       </a>
     </div>
   </main>
@@ -88,7 +89,7 @@
       const reqId = 'REQ-' + Math.random().toString(36).substring(2, 8).toUpperCase();
       
       const requests = JSON.parse(localStorage.getItem('my_requests') || '[]');
-      requests.push({ reqId, amount, pscCode, note, date: new Date().toISOString() });
+      requests.push({ reqId, amount, pscCode, note, status: 'pending', date: new Date().toISOString() });
       localStorage.setItem('my_requests', JSON.stringify(requests));
 
       document.getElementById('req-id').innerText = reqId;
