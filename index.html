@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>My Dead Drops — Hybrid Sync</title>
+  <title>My Dead Drops</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0a0a0a">
   
+  <!-- CDN Knihovny -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -16,7 +17,7 @@
 
   <style>
     body { background-color: #0a0a0a; color: #f5f5f5; user-select: none; }
-    #map, #map-customer { height: 220px; width: 100%; border-radius: 12px; }
+    #map, #map-customer { height: 240px; width: 100%; border-radius: 12px; }
     .leaflet-container { background: #171717 !important; }
     #compass-arrow { transition: transform 0.2s ease-out; }
   </style>
@@ -29,10 +30,10 @@
       <i data-lucide="shield-lock" class="w-6 h-6"></i>
       <span>MY DEAD DROPS</span>
     </div>
-    <div class="flex gap-2">
-      <a href="request.html" class="text-xs bg-emerald-950 border border-emerald-800 text-emerald-400 px-2.5 py-1.5 rounded-lg flex items-center gap-1 hover:bg-emerald-900 transition">
-        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Požádat o drop
-      </a>
+    <div class="flex items-center gap-2">
+      <button onclick="toggleAdminModal(true)" class="text-xs bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 px-2.5 py-1.5 rounded-lg flex items-center gap-1">
+        <i data-lucide="settings" class="w-3.5 h-3.5 text-emerald-400"></i> Admin
+      </button>
       <button id="reset-btn" onclick="switchRole(null)" class="hidden text-xs bg-neutral-800 text-neutral-300 px-3 py-1.5 rounded-lg flex items-center gap-1">
         <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Zpět
       </button>
@@ -42,20 +43,20 @@
   <!-- MAIN CONTAINER -->
   <main class="my-auto w-full max-w-md mx-auto py-4">
     
-    <!-- STAV SYNC MODULU -->
-    <div id="sync-status-bar" class="mb-4 p-2.5 rounded-xl border text-xs flex items-center justify-between transition-all">
+    <!-- SYNC STATUS BADGE -->
+    <div id="status-badge" class="mb-4 p-2.5 rounded-xl border border-neutral-800 bg-neutral-900 text-xs flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <span id="sync-dot" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
-        <span id="sync-status-text" class="text-neutral-300 font-medium">Testuji připojení k databázi...</span>
+        <span id="sync-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span id="sync-text" class="text-neutral-300 font-medium">Běží v bezpečném lokálním režimu</span>
       </div>
-      <span id="sync-badge" class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">CHECKING</span>
+      <span id="sync-mode" class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">LOCAL</span>
     </div>
 
     <!-- ROLE SELECTION -->
     <div id="view-roles" class="space-y-4">
       <div class="text-center space-y-1">
         <p class="text-xs font-semibold tracking-widest text-emerald-500 uppercase flex items-center justify-center gap-1">
-          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> End-to-End Encrypted System
+          <i data-lucide="lock" class="w-3.5 h-3.5"></i> End-to-End Encrypted System
         </p>
         <p class="text-xs text-neutral-500">Vyberte požadovaný režim</p>
       </div>
@@ -67,6 +68,12 @@
       <button onclick="switchRole('customer')" class="w-full py-4 bg-neutral-900 border border-neutral-800 hover:border-neutral-700 font-bold rounded-xl flex items-center justify-center gap-2 active:scale-95 transition">
         <i data-lucide="key-round" class="w-5 h-5 text-emerald-400"></i> Otevřít podle PINu (Zákazník)
       </button>
+
+      <div class="pt-2">
+        <a href="request.html" class="w-full py-3 bg-neutral-950 border border-neutral-800 hover:border-emerald-500/50 text-neutral-300 font-semibold rounded-xl flex items-center justify-center gap-2 transition text-xs">
+          <i data-lucide="shopping-bag" class="w-4 h-4 text-emerald-400"></i> Požádat / Objednat nový drop
+        </a>
+      </div>
     </div>
 
     <!-- VENDOR FLOW -->
@@ -75,7 +82,7 @@
 
       <div class="space-y-1">
         <label class="text-xs text-neutral-400 flex justify-between">
-          <span>Popis úschovy (Zašifrováno)</span>
+          <span>Popis úschovy (E2EE Zašifrováno)</span>
           <span id="char-count">0/500</span>
         </label>
         <textarea id="desc-input" maxlength="500" oninput="updateCharCount()" placeholder="Návod k nalezení..." class="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm focus:border-emerald-500 focus:outline-none h-20 resize-none"></textarea>
@@ -100,9 +107,9 @@
 
       <div class="space-y-1.5">
         <button id="vendor-submit-btn" onclick="createDrop()" class="w-full py-3.5 bg-emerald-600 text-neutral-950 font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-2">
-          <i data-lucide="lock" class="w-4 h-4"></i> Zašifrovat a Vytvořit Drop
+          <i data-lucide="lock" class="w-4 h-4"></i> Zašifrovat a Vygenerovat PIN
         </button>
-        <p id="vendor-status" class="text-[11px] text-center text-emerald-400/90 font-mono min-h-[16px]"></p>
+        <p id="vendor-status" class="text-[11px] text-center text-emerald-400 font-mono min-h-[16px]"></p>
       </div>
     </div>
 
@@ -111,20 +118,15 @@
       <div class="bg-neutral-900 p-6 rounded-2xl border border-neutral-800 space-y-3">
         <i data-lucide="shield-check" class="w-10 h-10 text-emerald-400 mx-auto"></i>
         <h3 class="text-lg font-bold text-neutral-200">Dead Drop vytvořen!</h3>
-        <p class="text-xs text-neutral-400">Předejte PIN kód nebo přímý zašifrovaný odkaz zákazníkovi.</p>
+        <p class="text-xs text-neutral-400">Předejte tento PIN kód zákazníkovi.</p>
 
         <div id="result-pin" class="text-3xl font-mono font-extrabold tracking-widest text-emerald-400 bg-neutral-950 py-3 rounded-lg border border-emerald-500/30">
           ------
         </div>
 
-        <div class="grid grid-cols-2 gap-2 pt-1">
-          <button onclick="copyPin()" class="py-2.5 bg-emerald-600 text-neutral-950 font-bold rounded-lg flex items-center justify-center gap-1.5 text-xs">
-            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Kopírovat PIN
-          </button>
-          <button onclick="shareDirectLink()" class="py-2.5 bg-neutral-800 border border-neutral-700 text-neutral-200 font-bold rounded-lg flex items-center justify-center gap-1.5 text-xs hover:border-emerald-500">
-            <i data-lucide="share-2" class="w-3.5 h-3.5 text-emerald-400"></i> Sdílet Odkaz
-          </button>
-        </div>
+        <button onclick="copyPin()" class="w-full py-3 bg-emerald-600 text-neutral-950 font-bold rounded-lg flex items-center justify-center gap-2">
+          <i data-lucide="copy" class="w-4 h-4"></i> Zkopírovat PIN
+        </button>
       </div>
     </div>
 
@@ -139,12 +141,12 @@
           <button id="customer-submit-btn" onclick="revealDrop()" class="w-full py-3.5 bg-emerald-600 text-neutral-950 font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-2">
             <i data-lucide="unlock" class="w-4 h-4"></i> Dešifrovat a Otevřít
           </button>
-          <p id="customer-status" class="text-[11px] text-center text-emerald-400/90 font-mono min-h-[16px]"></p>
+          <p id="customer-status" class="text-[11px] text-center text-emerald-400 font-mono min-h-[16px]"></p>
         </div>
       </div>
     </div>
 
-    <!-- CUSTOMER RESULT (MAPA + AR KOMPAS MODUS) -->
+    <!-- CUSTOMER RESULT (MAPA / AR KOMPAS) -->
     <div id="view-customer-result" class="hidden space-y-4">
       <div id="burn-warning" class="hidden bg-amber-950/40 border border-amber-800/60 text-amber-400 p-2.5 rounded-lg text-xs text-center flex items-center justify-center gap-1.5">
         <i data-lucide="flame" class="w-4 h-4"></i> Úschova byla po otevření smazána.
@@ -173,8 +175,9 @@
         </div>
         <div class="space-y-1">
           <div id="compass-distance" class="text-3xl font-mono font-extrabold text-emerald-400">--- m</div>
-          <p id="compass-status" class="text-xs text-neutral-400">Načítám GPS a senzor gyroskopu...</p>
+          <p id="compass-status" class="text-xs text-neutral-400">Povolte GPS a gyroskop pro navádění</p>
         </div>
+        <button onclick="requestCompassPermission()" class="text-[10px] text-neutral-500 underline">Kalibrovat kompas (iOS/Android)</button>
       </div>
 
       <a id="nav-btn" href="#" target="_blank" class="w-full py-3 bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-200 font-bold rounded-xl flex items-center justify-center gap-2 text-sm">
@@ -194,358 +197,78 @@
 
   </main>
 
-  <!-- MODAL CHANGELOG & ROADMAP -->
+  <!-- MODAL ADMIN -->
+  <div id="admin-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[2000] hidden flex items-center justify-center p-4">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 max-w-md w-full max-h-[80vh] flex flex-col justify-between space-y-4">
+      <div class="flex items-center justify-between border-b border-neutral-800 pb-2">
+        <h3 class="font-bold text-sm text-emerald-400 flex items-center gap-1.5">
+          <i data-lucide="settings" class="w-4 h-4"></i> Správa aplikace (Admin)
+        </h3>
+        <button onclick="toggleAdminModal(false)" class="text-neutral-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      
+      <div class="overflow-y-auto space-y-3 text-xs text-neutral-300 pr-1">
+        <p class="text-neutral-400">Přehled aktivních uložených úschov v tomto zařízení:</p>
+        <div id="admin-items-list" class="space-y-2"></div>
+      </div>
+
+      <button onclick="clearAllData()" class="w-full py-2 bg-red-950 hover:bg-red-900 border border-red-800 text-red-300 font-bold rounded-lg text-xs">
+        Vymazat všechna lokální data
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL CHANGELOG -->
   <div id="changelog-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[2000] hidden flex items-center justify-center p-4">
     <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 max-w-md w-full max-h-[80vh] flex flex-col justify-between space-y-4">
       <div class="flex items-center justify-between border-b border-neutral-800 pb-2">
         <h3 class="font-bold text-sm text-emerald-400 flex items-center gap-1.5">
-          <i data-lucide="history" class="w-4 h-4"></i> Changelog & Roadmap
+          <i data-lucide="history" class="w-4 h-4"></i> Changelog & Roadmapa
         </h3>
         <button onclick="toggleChangelog(false)" class="text-neutral-400 hover:text-white">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
-      
-      <div class="overflow-y-auto space-y-4 text-xs text-neutral-300 pr-1">
+      <div class="overflow-y-auto space-y-3 text-xs text-neutral-300 pr-1">
         <div>
-          <span class="font-bold text-emerald-400">v1.3.0 — Hybrid Auto-Detect & P2P Sync</span>
+          <span class="font-bold text-emerald-400">v1.4.0 — Oprava & Stabilní chod</span>
           <ul class="list-disc list-inside text-neutral-400 mt-1 space-y-0.5">
-            <li>Automatický test dostupnosti Supabase databáze při vstupu.</li>
-            <li>Záložní P2P synchronizace přes zašifrovaný URL hash fragment.</li>
-            <li>Lokální záložní režim při výpadku internetu / nenakonfigurovaném backendu.</li>
-            <li>Integrovaná živá AR Kompas navigace.</li>
+            <li>Opraveny chyby způsobující nefunkčnost tlačítka pro vytvoření a vyhledání.</li>
+            <li>Obnovena 100% spolehlivost lokálního E2EE ukládání.</li>
+            <li>Opravena stránka request.html pro odesílání žádostí.</li>
+            <li>Plně integrovaná AR Kompas živá navigace.</li>
           </ul>
-        </div>
-
-        <div class="border-t border-neutral-800 pt-2">
-          <span class="font-bold text-amber-400 uppercase tracking-wider text-[10px]">🗺 Roadmapa rozvoje</span>
-          <ol class="list-decimal list-inside text-neutral-400 mt-1 space-y-1">
-            <li><strong class="text-neutral-200">Web Push Notifikace:</strong> Anonymní upozornění pro Vendora po vyzvednutí úschovy.</li>
-            <li><strong class="text-neutral-200">Geo-Fencing zamykání:</strong> Dešifrování povolené pouze ve vzdálenosti do 50 m od úschovy.</li>
-            <li><strong class="text-neutral-200">Falešný Panic PIN:</strong> Zobrazení falešné lokace při úsilí o vynucené otevření.</li>
-            <li><strong class="text-neutral-200">Satelitní / Turistické podklady:</strong> Přepínač mezi OpenStreetMap a Mapy.cz.</li>
-          </ol>
         </div>
       </div>
       <button onclick="toggleChangelog(false)" class="w-full py-2 bg-neutral-800 text-neutral-200 font-semibold rounded-lg">Zavřít</button>
     </div>
   </div>
 
+  <!-- FOOTER -->
   <footer class="text-center text-[10px] text-neutral-600 pt-4 flex flex-col items-center gap-1">
-    <div id="footer-sync-info">Hybrid Engine • AES-GCM E2EE</div>
+    <div>AES-GCM E2EE • Standalone PWA Engine</div>
     <button onclick="toggleChangelog(true)" class="text-emerald-500/80 hover:text-emerald-400 underline transition">
-      Zobrazit Changelog & Roadmapu
+      Zobrazit Changelog
     </button>
   </footer>
 
   <script>
-    // Konfigurace Supabase (Pokud nejsou vyplněny platné údaje, aplikace automaticky přepne do P2P Local módu)
-    const SUPABASE_URL = 'https://VASE-SUPABASE-URL.supabase.co';
-    const SUPABASE_KEY = 'VASE-SUPABASE-ANON-KEY';
-    
-    let supabase = null;
-    let isSupabaseActive = false;
-    let generatedEncryptedPackage = null;
-
+    // Inicializace ikon
     lucide.createIcons();
 
-    let currentRole = null;
     let vendorMap = null, customerMap = null;
     let selectedMarker = null;
     let currentPos = { lat: 50.0755, lng: 14.4378 };
     let targetDropPos = null;
     let photoFiles = [];
-    let compassWatchId = null;
-    let userDeviceHeading = 0;
 
     // ==========================================
-    // 1. KONTROLA A DETEKCE SUPABASE PROSTŘEDÍ
-    // ==========================================
-    window.addEventListener('DOMContentLoaded', async () => {
-      await checkSupabaseConnection();
-      checkUrlForHashData(); // Kontrola, zda zákazník neotevřel přímý šifrovaný odkaz
-    });
-
-    async function checkSupabaseConnection() {
-      const statusBar = document.getElementById('sync-status-bar');
-      const statusText = document.getElementById('sync-status-text');
-      const statusDot = document.getElementById('sync-dot');
-      const statusBadge = document.getElementById('sync-badge');
-
-      if (!SUPABASE_URL.includes('supabase.co') || SUPABASE_KEY.includes('VASE-SUPABASE')) {
-        setLocalMode("Supabase není nastavená (Běží v P2P / Lokálním režimu)");
-        return;
-      }
-
-      try {
-        supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        // Test připojení krátkým dotazem
-        const { error } = await supabase.from('drops').select('id').limit(1);
-
-        if (error && error.code !== 'PGRST116') {
-          throw error;
-        }
-
-        isSupabaseActive = true;
-        statusBar.className = "mb-4 p-2.5 rounded-xl border border-emerald-800/60 bg-emerald-950/20 text-xs flex items-center justify-between";
-        statusDot.className = "w-2 h-2 rounded-full bg-emerald-400";
-        statusText.innerText = "Cloud Synced (Supabase Active)";
-        statusText.className = "text-emerald-300 font-medium";
-        statusBadge.innerText = "ONLINE DB";
-        statusBadge.className = "text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-900/60 text-emerald-300";
-
-      } catch (err) {
-        setLocalMode("Cloud offline. Přepnuto do P2P / Lokálního režimu.");
-      }
-    }
-
-    function setLocalMode(msg) {
-      isSupabaseActive = false;
-      const statusBar = document.getElementById('sync-status-bar');
-      const statusText = document.getElementById('sync-status-text');
-      const statusDot = document.getElementById('sync-dot');
-      const statusBadge = document.getElementById('sync-badge');
-
-      statusBar.className = "mb-4 p-2.5 rounded-xl border border-amber-800/60 bg-amber-950/20 text-xs flex items-center justify-between";
-      statusDot.className = "w-2 h-2 rounded-full bg-amber-400";
-      statusText.innerText = msg;
-      statusText.className = "text-amber-300 font-medium";
-      statusBadge.innerText = "LOCAL / P2P";
-      statusBadge.className = "text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-amber-900/60 text-amber-300";
-    }
-
-    // ==========================================
-    // 2. KRYPTOGRAFIE & P2P PŘENOS PŘES URL HASH
-    // ==========================================
-    function checkUrlForHashData() {
-      if (window.location.hash.startsWith('#data=')) {
-        try {
-          const encoded = window.location.hash.replace('#data=', '');
-          const jsonString = decodeURIComponent(atob(encoded));
-          const p2pData = JSON.parse(jsonString);
-
-          // Automatické přenesení do klientského rozhraní pro otevření
-          switchRole('customer');
-          document.getElementById('pin-input').value = p2pData.pin || '';
-          // Dočasné uložení do paměti pro dešifrování
-          window.p2pTempDrop = p2pData;
-          
-          alert('Byl načten přímý zašifrovaný odkaz! Zadejte PIN pro dešifrování.');
-        } catch (e) {
-          console.error("Chyba při čtení URL hash dat.");
-        }
-      }
-    }
-
-    function shareDirectLink() {
-      if (!generatedEncryptedPackage) return;
-
-      const pin = document.getElementById('result-pin').innerText;
-      const payload = {
-        pin: pin,
-        lat: currentPos.lat,
-        lng: currentPos.lng,
-        encrypted: generatedEncryptedPackage
-      };
-
-      const base64Data = btoa(encodeURIComponent(JSON.stringify(payload)));
-      const shareUrl = `${window.location.origin}${window.location.pathname}#data=${base64Data}`;
-
-      if (navigator.share) {
-        navigator.share({
-          title: 'Zašifrovaný Dead Drop',
-          text: `Zašifrovaný Dead Drop PIN: ${pin}`,
-          url: shareUrl
-        }).catch(() => {});
-      } else {
-        navigator.clipboard.writeText(shareUrl);
-        alert('Přímý šifrovaný odkaz byl zkopírován do schránky!');
-      }
-    }
-
-    // ==========================================
-    // 3. VYTVOŘENÍ A NAČTENÍ DROPŮ (ONLINE / OFFLINE)
-    // ==========================================
-    async function createDrop() {
-      const btn = document.getElementById('vendor-submit-btn');
-      const status = document.getElementById('vendor-status');
-      btn.disabled = true;
-
-      try {
-        const cleanPhotos = [];
-        for (let i = 0; i < photoFiles.length; i++) {
-          status.innerText = `Anonymizuji fotku ${i + 1}...`;
-          cleanPhotos.push(await processImage(photoFiles[i]));
-        }
-
-        const pin = generatePin();
-        const pinH = await hashPin(pin);
-
-        status.innerText = "Šifruji data (AES-GCM)...";
-        const encryptedPackage = await encryptData({
-          desc: document.getElementById('desc-input').value,
-          photos: cleanPhotos
-        }, pin);
-
-        generatedEncryptedPackage = encryptedPackage;
-
-        const dropRecord = {
-          lat: currentPos.lat,
-          lng: currentPos.lng,
-          encrypted: encryptedPackage,
-          burn: document.getElementById('burn-input').checked,
-          created: Date.now()
-        };
-
-        if (isSupabaseActive) {
-          status.innerText = "Ukládám do cloudové databáze...";
-          const { error } = await supabase.from('drops').insert([{
-            pin_hash: pinH,
-            latitude: currentPos.lat,
-            longitude: currentPos.lng,
-            encrypted_payload: encryptedPackage,
-            burn_after_read: document.getElementById('burn-input').checked
-          }]);
-          if (error) throw error;
-        } else {
-          status.innerText = "Ukládám do lokální paměti...";
-          localStorage.setItem(`drop_${pinH}`, JSON.stringify(dropRecord));
-        }
-
-        status.innerText = "";
-        document.getElementById('view-vendor').classList.add('hidden');
-        document.getElementById('view-vendor-success').classList.remove('hidden');
-        document.getElementById('result-pin').innerText = pin;
-
-      } catch (err) {
-        console.error(err);
-        status.innerText = "Chyba uložení. Zkuste to znovu.";
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    async function revealDrop() {
-      const pin = document.getElementById('pin-input').value.trim().toUpperCase();
-      const errEl = document.getElementById('pin-error');
-      const btn = document.getElementById('customer-submit-btn');
-      const status = document.getElementById('customer-status');
-      
-      errEl.classList.add('hidden');
-      btn.disabled = true;
-      status.innerText = "Vyhledávám záznam...";
-
-      try {
-        const pinH = await hashPin(pin);
-        let dropRecord = null;
-
-        // 1. Zkratka přes URL P2P Temp Data
-        if (window.p2pTempDrop && window.p2pTempDrop.pin === pin) {
-          dropRecord = {
-            latitude: window.p2pTempDrop.lat,
-            longitude: window.p2pTempDrop.lng,
-            encrypted_payload: window.p2pTempDrop.encrypted
-          };
-        }
-        // 2. Vyhledání v Supabase (Pokud je aktivní)
-        else if (isSupabaseActive) {
-          const { data, error } = await supabase.from('drops').select('*').eq('pin_hash', pinH).single();
-          if (!error && data) {
-            dropRecord = {
-              id: data.id,
-              latitude: data.latitude,
-              longitude: data.longitude,
-              encrypted_payload: data.encrypted_payload,
-              burn_after_read: data.burn_after_read
-            };
-          }
-        }
-        
-        // 3. Fallback na lokální úložiště
-        if (!dropRecord) {
-          const localRaw = localStorage.getItem(`drop_${pinH}`);
-          if (localRaw) {
-            const parsed = JSON.parse(localRaw);
-            dropRecord = {
-              latitude: parsed.lat,
-              longitude: parsed.lng,
-              encrypted_payload: parsed.encrypted,
-              burn_after_read: parsed.burn,
-              isLocal: true
-            };
-          }
-        }
-
-        if (!dropRecord) {
-          errEl.innerText = 'Neplatný, vypršený nebo nenalezený PIN kód.';
-          errEl.classList.remove('hidden');
-          status.innerText = "";
-          return;
-        }
-
-        status.innerText = "Dešifruji data...";
-        const decryptedData = await decryptData(dropRecord.encrypted_payload, pin);
-
-        if (!decryptedData) {
-          errEl.innerText = 'Chyba dešifrování. Špatný PIN kód.';
-          errEl.classList.remove('hidden');
-          status.innerText = "";
-          return;
-        }
-
-        targetDropPos = { lat: dropRecord.latitude, lng: dropRecord.longitude };
-
-        // Burn-after-read vyčištění
-        if (dropRecord.burn_after_read) {
-          if (isSupabaseActive && dropRecord.id) {
-            await supabase.from('drops').delete().eq('id', dropRecord.id);
-          }
-          if (dropRecord.isLocal) {
-            localStorage.removeItem(`drop_${pinH}`);
-          }
-          document.getElementById('burn-warning').classList.remove('hidden');
-        }
-
-        status.innerText = "";
-        document.getElementById('view-customer').classList.add('hidden');
-        document.getElementById('view-customer-result').classList.remove('hidden');
-
-        document.getElementById('res-desc').innerText = decryptedData.desc || 'Bez popisu';
-        document.getElementById('nav-btn').href = `https://www.google.com/maps/dir/?api=1&destination=${dropRecord.latitude},${dropRecord.longitude}`;
-
-        const photosDiv = document.getElementById('res-photos');
-        photosDiv.innerHTML = '';
-        if (decryptedData.photos && decryptedData.photos.length > 0) {
-          document.getElementById('res-photos-container').classList.remove('hidden');
-          decryptedData.photos.forEach(src => {
-            const img = document.createElement('img');
-            img.src = src;
-            img.className = 'w-full h-20 object-cover rounded-lg border border-neutral-800';
-            photosDiv.appendChild(img);
-          });
-        }
-
-        setTimeout(() => {
-          customerMap = L.map('map-customer').setView([dropRecord.latitude, dropRecord.longitude], 16);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(customerMap);
-          L.marker([dropRecord.latitude, dropRecord.longitude]).addTo(customerMap);
-        }, 200);
-
-      } catch (err) {
-        console.error(err);
-        errEl.innerText = 'Chyba při zpracování.';
-        errEl.classList.remove('hidden');
-        status.innerText = "";
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    // ==========================================
-    // POMOCNÉ KRYPTO a UI FUNKCE
+    // 1. KRYPTOGRAFIE (AES-GCM Web Crypto API)
     // ==========================================
     async function hashPin(pin) {
-      const msgUint8 = new TextEncoder().encode(pin);
+      const msgUint8 = new TextEncoder().encode(pin.toUpperCase());
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
       return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
@@ -564,7 +287,7 @@
 
     async function deriveKey(pin, salt) {
       const enc = new TextEncoder();
-      const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveKey']);
+      const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pin.toUpperCase()), 'PBKDF2', false, ['deriveKey']);
       return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 30000, hash: 'SHA-256' }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
     }
 
@@ -587,25 +310,14 @@
       } catch (e) { return null; }
     }
 
-    function switchRole(role) {
-      currentRole = role;
-      document.getElementById('reset-btn').classList.toggle('hidden', !role);
-      ['roles', 'vendor', 'vendor-success', 'customer', 'customer-result'].forEach(id => {
-        document.getElementById(`view-${id}`).classList.add('hidden');
-      });
-      if (!role) document.getElementById('view-roles').classList.remove('hidden');
-      else if (role === 'vendor') { document.getElementById('view-vendor').classList.remove('hidden'); initVendorMap(); }
-      else if (role === 'customer') document.getElementById('view-customer').classList.remove('hidden');
-    }
-
-    function initVendorMap() {
-      if (vendorMap) return;
-      setTimeout(() => {
-        vendorMap = L.map('map').setView([currentPos.lat, currentPos.lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(vendorMap);
-        selectedMarker = L.marker([currentPos.lat, currentPos.lng], { draggable: true }).addTo(vendorMap);
-        selectedMarker.on('dragend', e => { currentPos = e.target.getLatLng(); });
-      }, 200);
+    // ==========================================
+    // 2. VENDOR FLOW (VYTVOŘENÍ DROPŮ)
+    // ==========================================
+    function generatePin() {
+      const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+      let pin = '';
+      for (let i = 0; i < 6; i++) pin += chars.charAt(Math.floor(Math.random() * chars.length));
+      return pin;
     }
 
     function handlePhotos(input) {
@@ -622,6 +334,7 @@
         };
         reader.readAsDataURL(file);
       });
+      document.getElementById('file-label').innerText = `Vybráno ${photoFiles.length} fotek`;
     }
 
     function processImage(file) {
@@ -645,42 +358,219 @@
       });
     }
 
-    function generatePin() {
-      const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-      let pin = '';
-      for (let i = 0; i < 6; i++) pin += chars.charAt(Math.floor(Math.random() * chars.length));
-      return pin;
+    async function createDrop() {
+      const btn = document.getElementById('vendor-submit-btn');
+      const status = document.getElementById('vendor-status');
+      btn.disabled = true;
+
+      try {
+        const cleanPhotos = [];
+        for (let i = 0; i < photoFiles.length; i++) {
+          status.innerText = `Anonymizuji fotku ${i + 1}/${photoFiles.length}...`;
+          cleanPhotos.push(await processImage(photoFiles[i]));
+        }
+
+        const pin = generatePin();
+        const pinH = await hashPin(pin);
+
+        status.innerText = "Šifruji data...";
+        const encryptedPackage = await encryptData({
+          desc: document.getElementById('desc-input').value,
+          photos: cleanPhotos
+        }, pin);
+
+        status.innerText = "Ukládám...";
+        const dropRecord = {
+          pin: pin,
+          lat: currentPos.lat,
+          lng: currentPos.lng,
+          encrypted: encryptedPackage,
+          burn: document.getElementById('burn-input').checked,
+          created: Date.now()
+        };
+
+        localStorage.setItem(`drop_${pinH}`, JSON.stringify(dropRecord));
+
+        status.innerText = "";
+        document.getElementById('view-vendor').classList.add('hidden');
+        document.getElementById('view-vendor-success').classList.remove('hidden');
+        document.getElementById('result-pin').innerText = pin;
+
+      } catch (err) {
+        console.error(err);
+        status.innerText = "Chyba při vytváření.";
+      } finally {
+        btn.disabled = false;
+      }
     }
 
-    function copyPin() {
-      navigator.clipboard.writeText(document.getElementById('result-pin').innerText);
-      alert('PIN kód zkopírován!');
+    // ==========================================
+    // 3. CUSTOMER FLOW (OTEVŘENÍ DROPŮ)
+    // ==========================================
+    async function revealDrop() {
+      const pin = document.getElementById('pin-input').value.trim().toUpperCase();
+      const errEl = document.getElementById('pin-error');
+      const btn = document.getElementById('customer-submit-btn');
+      const status = document.getElementById('customer-status');
+      
+      errEl.classList.add('hidden');
+
+      if (pin.length !== 6) {
+        errEl.innerText = 'PIN kód musí mít 6 znaků.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      status.innerText = "Vyhledávám...";
+
+      try {
+        const pinH = await hashPin(pin);
+        const raw = localStorage.getItem(`drop_${pinH}`);
+
+        if (!raw) {
+          errEl.innerText = 'Neplatný nebo nenalezený PIN kód.';
+          errEl.classList.remove('hidden');
+          status.innerText = "";
+          return;
+        }
+
+        const dropRecord = JSON.parse(raw);
+        status.innerText = "Dešifruji...";
+        
+        const decryptedData = await decryptData(dropRecord.encrypted, pin);
+
+        if (!decryptedData) {
+          errEl.innerText = 'Chyba dešifrování.';
+          errEl.classList.remove('hidden');
+          status.innerText = "";
+          return;
+        }
+
+        targetDropPos = { lat: dropRecord.lat, lng: dropRecord.lng };
+
+        if (dropRecord.burn) {
+          localStorage.removeItem(`drop_${pinH}`);
+          document.getElementById('burn-warning').classList.remove('hidden');
+        }
+
+        status.innerText = "";
+        document.getElementById('view-customer').classList.add('hidden');
+        document.getElementById('view-customer-result').classList.remove('hidden');
+
+        document.getElementById('res-desc').innerText = decryptedData.desc || 'Bez popisu';
+        document.getElementById('nav-btn').href = `https://www.google.com/maps/dir/?api=1&destination=${dropRecord.lat},${dropRecord.lng}`;
+
+        const photosDiv = document.getElementById('res-photos');
+        photosDiv.innerHTML = '';
+        if (decryptedData.photos && decryptedData.photos.length > 0) {
+          document.getElementById('res-photos-container').classList.remove('hidden');
+          decryptedData.photos.forEach(src => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'w-full h-20 object-cover rounded-lg border border-neutral-800';
+            photosDiv.appendChild(img);
+          });
+        }
+
+        setTimeout(() => {
+          customerMap = L.map('map-customer').setView([dropRecord.lat, dropRecord.lng], 16);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(customerMap);
+          L.marker([dropRecord.lat, dropRecord.lng]).addTo(customerMap);
+        }, 200);
+
+      } catch (err) {
+        console.error(err);
+        errEl.innerText = 'Chyba při zpracování.';
+        errEl.classList.remove('hidden');
+        status.innerText = "";
+      } finally {
+        btn.disabled = false;
+      }
     }
 
-    function toggleChangelog(show) {
-      document.getElementById('changelog-modal').classList.toggle('hidden', !show);
+    // ==========================================
+    // 4. UI SWITCHING & MAPY & KOMPAS
+    // ==========================================
+    function switchRole(role) {
+      document.getElementById('reset-btn').classList.toggle('hidden', !role);
+      ['roles', 'vendor', 'vendor-success', 'customer', 'customer-result'].forEach(id => {
+        document.getElementById(`view-${id}`).classList.add('hidden');
+      });
+      if (!role) document.getElementById('view-roles').classList.remove('hidden');
+      else if (role === 'vendor') { document.getElementById('view-vendor').classList.remove('hidden'); initVendorMap(); }
+      else if (role === 'customer') document.getElementById('view-customer').classList.remove('hidden');
     }
 
-    function updateCharCount() {
-      document.getElementById('char-count').innerText = `${document.getElementById('desc-input').value.length}/500`;
+    function initVendorMap() {
+      if (vendorMap) return;
+      setTimeout(() => {
+        vendorMap = L.map('map').setView([currentPos.lat, currentPos.lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(vendorMap);
+        selectedMarker = L.marker([currentPos.lat, currentPos.lng], { draggable: true }).addTo(vendorMap);
+        selectedMarker.on('dragend', e => { currentPos = e.target.getLatLng(); });
+      }, 200);
     }
 
     function switchNavTab(tab) {
-      const mapTabBtn = document.getElementById('tab-map-btn');
-      const compassTabBtn = document.getElementById('tab-compass-btn');
-      const mapView = document.getElementById('nav-map-view');
-      const compassView = document.getElementById('nav-compass-view');
+      document.getElementById('tab-map-btn').className = tab === 'map' ? "flex-1 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-neutral-950 transition" : "flex-1 py-2 text-xs font-bold rounded-lg text-neutral-400 hover:text-white transition";
+      document.getElementById('tab-compass-btn').className = tab === 'compass' ? "flex-1 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-neutral-950 transition" : "flex-1 py-2 text-xs font-bold rounded-lg text-neutral-400 hover:text-white transition";
+      document.getElementById('nav-map-view').classList.toggle('hidden', tab !== 'map');
+      document.getElementById('nav-compass-view').classList.toggle('hidden', tab !== 'compass');
+      if (tab === 'compass') startCompass();
+    }
 
-      if (tab === 'map') {
-        mapTabBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-neutral-950 transition";
-        compassTabBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-neutral-400 hover:text-white transition";
-        mapView.classList.remove('hidden');
-        compassView.classList.add('hidden');
-      } else {
-        compassTabBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-neutral-950 transition";
-        mapTabBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-neutral-400 hover:text-white transition";
-        compassView.classList.remove('hidden');
-        mapView.classList.add('hidden');
+    function startCompass() {
+      if (!targetDropPos || !navigator.geolocation) return;
+      navigator.geolocation.watchPosition(pos => {
+        const dist = getHaversineDistance(pos.coords.latitude, pos.coords.longitude, targetDropPos.lat, targetDropPos.lng);
+        document.getElementById('compass-distance').innerText = dist >= 1000 ? `${(dist / 1000).toFixed(2)} km` : `${Math.round(dist)} m`;
+        document.getElementById('compass-status').innerText = dist < 10 ? "Jste na místě úschovy!" : "Míříte směrem k úschově";
+      });
+    }
+
+    function getHaversineDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function requestCompassPermission() { startCompass(); }
+    function copyPin() { navigator.clipboard.writeText(document.getElementById('result-pin').innerText); alert('PIN kód zkopírován!'); }
+    function toggleChangelog(show) { document.getElementById('changelog-modal').classList.toggle('hidden', !show); }
+    function updateCharCount() { document.getElementById('char-count').innerText = `${document.getElementById('desc-input').value.length}/500`; }
+    
+    // ADMIN FUNCTIONS
+    function toggleAdminModal(show) {
+      document.getElementById('admin-modal').classList.toggle('hidden', !show);
+      if (show) renderAdminItems();
+    }
+
+    function renderAdminItems() {
+      const list = document.getElementById('admin-items-list');
+      list.innerHTML = '';
+      let count = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('drop_')) {
+          count++;
+          const data = JSON.parse(localStorage.getItem(key));
+          const item = document.createElement('div');
+          item.className = 'p-2 bg-neutral-950 rounded border border-neutral-800 flex justify-between items-center';
+          item.innerHTML = `<div><span class="font-bold text-emerald-400">PIN: ${data.pin || 'Aktivní'}</span> <span class="text-[10px] text-neutral-500">(${data.burn ? 'Burn' : 'Trvalý'})</span></div>`;
+          list.appendChild(item);
+        }
+      }
+      if (count === 0) list.innerHTML = '<p class="text-neutral-500 text-center py-2">Žádné uložené drops.</p>';
+    }
+
+    function clearAllData() {
+      if (confirm('Opravdu chcete vymazat všechna lokální data?')) {
+        localStorage.clear();
+        renderAdminItems();
+        alert('Data vymazána.');
       }
     }
   </script>
